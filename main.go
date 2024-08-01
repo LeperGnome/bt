@@ -8,71 +8,52 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type App struct {
-	root       *Node
-	currentDir *Node
+type model struct {
+	tree Tree
 }
 
-func (a App) Init() tea.Cmd {
-	// Just return `nil`, which means "no I/O right now, please."
+func (m model) Init() tea.Cmd {
 	return nil
 }
-
-func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return a, tea.Quit
+			return m, tea.Quit
 		case "j", "down":
-			if a.currentDir.Selected < len(a.currentDir.Children)-1 {
-				a.currentDir.Selected += 1
-				a.currentDir.smem += 1
-			}
+			m.tree.SelectNextChild()
 		case "k", "up":
-			if a.currentDir.Selected > 0 {
-				a.currentDir.Selected -= 1
-				a.currentDir.smem -= 1
-			}
+			m.tree.SelectPreviousChild()
 		case "l", "right":
-			next := &a.currentDir.Children[a.currentDir.Selected]
-			if next.Children == nil {
-				err := next.ReadChildren()
-				if err != nil {
-					panic(err) // TODO
-				}
-			}
-			if len(next.Children) > 0 {
-				a.currentDir = next
-				a.currentDir.Selected = a.currentDir.smem
+			err := m.tree.SetSelectedChildAsCurrent()
+			if err != nil {
+				panic(err) // TODO
 			}
 		case "h", "left":
-			if a.currentDir.Parent != nil {
-				a.currentDir.Selected = NotSelected
-				a.currentDir = a.currentDir.Parent
-			}
+			m.tree.SetParentAsCurrent()
 		case "enter":
-			selectedNode := &a.currentDir.Children[a.currentDir.Selected]
-			if selectedNode.Children != nil {
-				selectedNode.OrphanChildren()
-			} else {
-				err := selectedNode.ReadChildren()
-				if err != nil {
-					panic(err) // TODO
-				}
+			err := m.tree.CollapseOrExpandSelected()
+			if err != nil {
+				panic(err) // TODO
 			}
 		}
 	}
-	return a, nil
+	return m, nil
 }
-func (a App) View() string {
-	// The header
-	selectedNode := &a.currentDir.Children[a.currentDir.Selected]
-	s := "> " + selectedNode.Path + "\n"
-	s += fmt.Sprintf("current: '%s' selected child = %d\n", a.currentDir.Info.Name(), a.currentDir.Selected)
-	s += a.root.View()
-
+func (m model) View() string {
+	s := "> " + m.tree.GetSelectedChild().Path + "\n"
+	s += fmt.Sprintf(
+		"current: '%s' selected child idx = %d\n",
+		m.tree.CurrentDir.Info.Name(),
+		m.tree.CurrentDir.Selected,
+	)
+	rendered, err := Render(&m.tree)
+	if err != nil {
+		panic(err) // TODO
+	}
+	s += rendered
 	return s
 }
 
@@ -83,19 +64,17 @@ func main() {
 		rootPath = "."
 	}
 
-	root, err := InitRoot(rootPath)
+	tree, err := InitTree(rootPath)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	app := App{
-		root:       root,
-		currentDir: root,
-	}
+	m := model{tree: tree}
 
-	p := tea.NewProgram(app, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
+		fmt.Printf("Error: %v", err)
 		os.Exit(1)
 	}
 }
