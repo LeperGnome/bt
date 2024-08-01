@@ -68,7 +68,8 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (a App) View() string {
 	// The header
-	s := "> " + a.root.Path + "\n"
+	selectedNode := &a.currentDir.Children[a.currentDir.Selected]
+	s := "> " + selectedNode.Path + "\n"
 	s += fmt.Sprintf("current: '%s' selected child = %d\n", a.currentDir.Info.Name(), a.currentDir.Selected)
 	s += a.root.View()
 
