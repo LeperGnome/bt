@@ -9,7 +9,7 @@ import (
 )
 
 type App struct {
-	root    *Node
+	root       *Node
 	currentDir *Node
 }
 
@@ -36,7 +36,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.currentDir.smem -= 1
 			}
 		case "l", "right":
-            next := &a.currentDir.Children[a.currentDir.Selected]
+			next := &a.currentDir.Children[a.currentDir.Selected]
 			if next.Children == nil {
 				err := next.ReadChildren()
 				if err != nil {
@@ -45,7 +45,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if len(next.Children) > 0 {
 				a.currentDir = next
-                a.currentDir.Selected = a.currentDir.smem
+				a.currentDir.Selected = a.currentDir.smem
 			}
 		case "h", "left":
 			if a.currentDir.Parent != nil {
@@ -53,15 +53,15 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.currentDir = a.currentDir.Parent
 			}
 		case "enter":
-            selectedNode := &a.currentDir.Children[a.currentDir.Selected]
-            if selectedNode.Children != nil {
-                selectedNode.OrphanChildren()
-            } else {
-                err := selectedNode.ReadChildren()
-                if err != nil {
-                    panic(err) // TODO
-                }
-            }
+			selectedNode := &a.currentDir.Children[a.currentDir.Selected]
+			if selectedNode.Children != nil {
+				selectedNode.OrphanChildren()
+			} else {
+				err := selectedNode.ReadChildren()
+				if err != nil {
+					panic(err) // TODO
+				}
+			}
 		}
 	}
 	return a, nil
@@ -69,7 +69,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (a App) View() string {
 	// The header
 	s := "> " + a.root.Path + "\n"
-    s += fmt.Sprintf("current: '%s' selected child = %d\n", a.currentDir.Info.Name(), a.currentDir.Selected)
+	s += fmt.Sprintf("current: '%s' selected child = %d\n", a.currentDir.Info.Name(), a.currentDir.Selected)
 	s += a.root.View()
 
 	return s
@@ -88,7 +88,7 @@ func main() {
 	}
 
 	app := App{
-		root:    root,
+		root:       root,
 		currentDir: root,
 	}
 
