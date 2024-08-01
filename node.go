@@ -41,6 +41,7 @@ func (n *Node) ReadChildren() error {
 			Info:     chInfo,
 			Children: nil,
 			Parent:   n,
+			Selected: NotSelected,
 		})
 	}
 	n.Children = chNodes
