@@ -7,10 +7,13 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fatih/color"
 )
 
 type model struct {
-	tree Tree
+	tree      Tree
+	winHeight int
+	offsetMem int
 }
 
 func (m model) Init() tea.Cmd {
@@ -18,6 +21,8 @@ func (m model) Init() tea.Cmd {
 }
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.winHeight = msg.Height
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -45,16 +50,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m model) View() string {
 	lines := []string{
-		"> " + m.tree.GetSelectedChild().Path,
-		fmt.Sprintf(
-			"current: '%s' selected child idx = %d\n",
+		color.GreenString("> " + m.tree.GetSelectedChild().Path),
+		color.MagentaString(fmt.Sprintf(
+			"current = '%s'; selected child idx = %d; winH = %d",
 			m.tree.CurrentDir.Info.Name(),
 			m.tree.CurrentDir.Selected,
-		),
+			m.winHeight,
+		)),
 	}
+	fixBottomOffset := 5
+	maxHeight := m.winHeight - len(lines) - fixBottomOffset
+
 	rendered, selectedRow := Render(&m.tree)
-	selectedRow += len(lines)
-	lines = append(lines, rendered...)
+	offset := m.offsetMem
+	limit := len(rendered)
+	if maxHeight > 0 {
+		if selectedRow-offset > maxHeight {
+			offset = selectedRow - maxHeight
+			m.offsetMem = offset
+		}
+		limit = min(maxHeight+offset+fixBottomOffset, len(rendered))
+	}
+	lines = append(lines, rendered[offset:limit]...)
 	return strings.Join(lines, "\n")
 }
 
