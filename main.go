@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -43,18 +44,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 func (m model) View() string {
-	s := "> " + m.tree.GetSelectedChild().Path + "\n"
-	s += fmt.Sprintf(
-		"current: '%s' selected child idx = %d\n",
-		m.tree.CurrentDir.Info.Name(),
-		m.tree.CurrentDir.Selected,
-	)
-	rendered, err := Render(&m.tree)
-	if err != nil {
-		panic(err) // TODO
+	lines := []string{
+		"> " + m.tree.GetSelectedChild().Path,
+		fmt.Sprintf(
+			"current: '%s' selected child idx = %d\n",
+			m.tree.CurrentDir.Info.Name(),
+			m.tree.CurrentDir.Selected,
+		),
 	}
-	s += rendered
-	return s
+	rendered, selectedRow := Render(&m.tree)
+	selectedRow += len(lines)
+	lines = append(lines, rendered...)
+	return strings.Join(lines, "\n")
 }
 
 func main() {
