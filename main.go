@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fatih/color"
@@ -49,18 +50,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 func (m model) View() string {
-	lines := []string{
-		color.GreenString("> " + m.tree.GetSelectedChild().Path),
+	selected := m.tree.GetSelectedChild()
+	header := []string{
+		color.GreenString("> " + selected.Path),
 		color.MagentaString(fmt.Sprintf(
-			"current = '%s'; selected child idx = %d; winH = %d",
-			m.tree.CurrentDir.Info.Name(),
-			m.tree.CurrentDir.Selected,
-			m.windowHeight,
+			"%v : %d bytes",
+			selected.Info.ModTime().Format(time.RFC822),
+			selected.Info.Size(),
 		)),
 	}
-	rendered := m.renderer.Render(m.tree, m.windowHeight-len(lines))
+	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header))
 
-	lines = append(lines, rendered...)
+	lines := append(header, renderedTree...)
 	return strings.Join(lines, "\n")
 }
 
