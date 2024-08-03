@@ -16,6 +16,7 @@ type Renderer struct {
 }
 
 func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
+	// rendering tree
 	renderedTree, selectedRow := r.renderTree(tree)
 	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
 
@@ -25,8 +26,8 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 		MaxWidth(sectionWidth)
 	renderedStyledTree := treeStyle.Render(strings.Join(croppedTree, "\n"))
 
+	// rendering file content
 	selectedNode := tree.GetSelectedChild()
-
 	if selectedNode.Info.Mode().IsRegular() {
 		content, err := os.ReadFile(selectedNode.Path)
 		if err != nil {
@@ -106,7 +107,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 		if node.Info.IsDir() {
 			name = color.BlueString(node.Info.Name())
 		}
-		repr := strings.Repeat("  ", depth) + name
+		repr := strings.Repeat("    ", depth) + name
 		if marked && node.Selected == NotSelected {
 			repr += color.YellowString(" <-")
 			selectedRow = cnt
