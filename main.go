@@ -15,6 +15,7 @@ type model struct {
 	tree         *Tree
 	renderer     *Renderer
 	windowHeight int
+	windowWidth  int
 }
 
 func (m model) Init() tea.Cmd {
@@ -24,6 +25,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.windowHeight = msg.Height
+		m.windowWidth = msg.Width
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -59,10 +61,9 @@ func (m model) View() string {
 			selected.Info.Size(),
 		)),
 	}
-	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header))
+	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
 
-	lines := append(header, renderedTree...)
-	return strings.Join(lines, "\n")
+	return strings.Join(header, "\n") + "\n" + renderedTree
 }
 
 func newModel(tree Tree, renderer Renderer) model {

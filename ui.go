@@ -1,8 +1,12 @@
 package main
 
 import (
+	"math"
+	"os"
 	"strings"
+	"unicode/utf8"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 )
 
@@ -11,12 +15,49 @@ type Renderer struct {
 	offsetMem   int
 }
 
-func (r *Renderer) Render(tree *Tree, winSize int) []string {
-	rendered, selectedRow := r.render(tree)
-	return r.crop(rendered, selectedRow, winSize)
+func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
+	renderedTree, selectedRow := r.renderTree(tree)
+	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
+
+	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
+	treeStyle := lipgloss.
+		NewStyle().
+		MaxWidth(sectionWidth)
+	renderedStyledTree := treeStyle.Render(strings.Join(croppedTree, "\n"))
+
+	selectedNode := tree.GetSelectedChild()
+
+	if selectedNode.Info.Mode().IsRegular() {
+		content, err := os.ReadFile(selectedNode.Path)
+		if err != nil {
+			return renderedStyledTree
+		}
+		leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
+		contentStyle := lipgloss.
+			NewStyle().
+			Italic(true).
+			MarginLeft(leftMargin).
+			MaxWidth(sectionWidth + leftMargin - 1).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderLeft(true)
+
+		var contentLines []string
+		if !utf8.Valid(content) {
+			contentLines = []string{"<binary content>"}
+		} else {
+			contentLines = strings.Split(string(content), "\n")
+			contentLines = contentLines[:min(winHeight, len(contentLines))]
+		}
+		renderedStyledTree = lipgloss.JoinHorizontal(
+			0,
+			renderedStyledTree,
+			contentStyle.Render(strings.Join(contentLines, "\n")),
+		)
+	}
+	return renderedStyledTree
 }
 
-func (r *Renderer) crop(lines []string, currentLine int, windowHeight int) []string {
+func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) []string {
 	linesLen := len(lines)
 
 	// determining offset and limit based on selected row
@@ -38,7 +79,7 @@ func (r *Renderer) crop(lines []string, currentLine int, windowHeight int) []str
 }
 
 // Returns lines as slice and index of selected line
-func (r *Renderer) render(tree *Tree) ([]string, int) {
+func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 	cnt := -1
 	selectedRow := 0
 
