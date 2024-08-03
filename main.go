@@ -73,6 +73,8 @@ func newModel(tree Tree, renderer Renderer) model {
 }
 
 func main() {
+	paddingPtr := flag.Uint("pad", 5, "Edge padding for top and bottom")
+	inlinePtr := flag.Bool("i", false, "In-place render (without alternate screen)")
 	flag.Parse()
 	rootPath := flag.Arg(0)
 	if rootPath == "" {
@@ -84,11 +86,15 @@ func main() {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-	renderer := Renderer{EdgePadding: 5}
-
+	renderer := Renderer{EdgePadding: int(*paddingPtr)}
 	m := newModel(tree, renderer)
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	opts := []tea.ProgramOption{}
+	if !*inlinePtr {
+		opts = append(opts, tea.WithAltScreen())
+	}
+
+	p := tea.NewProgram(m, opts...)
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)
