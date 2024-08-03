@@ -65,10 +65,10 @@ func (m model) View() string {
 	return strings.Join(lines, "\n")
 }
 
-func newModel(tree Tree, edgePadding int) model {
+func newModel(tree Tree, renderer Renderer) model {
 	return model{
 		tree:     &tree,
-		renderer: &Renderer{EdgePadding: edgePadding},
+		renderer: &renderer,
 	}
 }
 
@@ -84,8 +84,9 @@ func main() {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
+	renderer := Renderer{EdgePadding: 5}
 
-	m := newModel(tree, 5)
+	m := newModel(tree, renderer)
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
