@@ -6,8 +6,39 @@ import (
 	"github.com/fatih/color"
 )
 
+type Renderer struct {
+	EdgePadding int
+	offsetMem   int
+}
+
+func (r *Renderer) Render(tree *Tree, winSize int) []string {
+	rendered, selectedRow := r.render(tree)
+	return r.crop(rendered, selectedRow, winSize)
+}
+
+func (r *Renderer) crop(lines []string, currentLine int, windowHeight int) []string {
+	linesLen := len(lines)
+
+	// determining offset and limit based on selected row
+	offset := r.offsetMem
+	limit := linesLen
+	if windowHeight > 0 {
+		// cursor is out for 'top' boundary
+		if currentLine+1 > windowHeight+offset-r.EdgePadding {
+			offset = min(currentLine+1-windowHeight+r.EdgePadding, linesLen-windowHeight)
+		}
+		// cursor is out for 'bottom' boundary
+		if currentLine < r.EdgePadding+offset {
+			offset = max(currentLine-r.EdgePadding, 0)
+		}
+		r.offsetMem = offset
+		limit = min(windowHeight+offset, linesLen)
+	}
+	return lines[offset:limit]
+}
+
 // Returns lines as slice and index of selected line
-func Render(tree *Tree) ([]string, int) {
+func (r *Renderer) render(tree *Tree) ([]string, int) {
 	cnt := -1
 	selectedRow := 0
 
