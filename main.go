@@ -11,9 +11,10 @@ import (
 )
 
 type model struct {
-	tree      Tree
-	winHeight int
-	offsetMem int
+	tree          Tree
+	fixEdgeOffset int
+	winHeight     int
+	offsetMem     *int
 }
 
 func (m model) Init() tea.Cmd {
@@ -58,21 +59,40 @@ func (m model) View() string {
 			m.winHeight,
 		)),
 	}
-	fixBottomOffset := 5
-	maxHeight := m.winHeight - len(lines) - fixBottomOffset
+	// max height for 'tree' section wihtout header
+	maxHeight := m.winHeight - len(lines)
 
+	// rendering tree
 	rendered, selectedRow := Render(&m.tree)
-	offset := m.offsetMem
-	limit := len(rendered)
+	totalTreeLines := len(rendered)
+
+	// determining offset and limit based on selected row
+	offset := *m.offsetMem
+	limit := totalTreeLines
 	if maxHeight > 0 {
-		if selectedRow-offset > maxHeight {
-			offset = selectedRow - maxHeight
-			m.offsetMem = offset
+		// cursor is out for 'top' boundary
+		if selectedRow+1 > maxHeight+offset-m.fixEdgeOffset {
+			offset = min(selectedRow+1-maxHeight+m.fixEdgeOffset, totalTreeLines-maxHeight)
 		}
-		limit = min(maxHeight+offset+fixBottomOffset, len(rendered))
+		// cursor is out for 'bottom' boundary
+		if selectedRow < m.fixEdgeOffset+offset {
+			offset = max(selectedRow-m.fixEdgeOffset, 0)
+		}
+		*m.offsetMem = offset
+		limit = min(maxHeight+offset, totalTreeLines)
 	}
+
 	lines = append(lines, rendered[offset:limit]...)
 	return strings.Join(lines, "\n")
+}
+
+func newModel(tree Tree, edgeOffset int) model {
+	offsetMem := 0
+	return model{
+		tree:          tree,
+		offsetMem:     &offsetMem,
+		fixEdgeOffset: edgeOffset,
+	}
 }
 
 func main() {
@@ -88,7 +108,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := model{tree: tree}
+	m := newModel(tree, 5)
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
