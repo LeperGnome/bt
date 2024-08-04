@@ -6,7 +6,7 @@ Navigate file tree in terminal.
 todo:
 - [x] Tree rendering
 - [x] File preview
-- [x] Scrolling with trees, that don't fix the screen
+- [x] Scrolling trees, that don't fit the screen
 - [ ] Copy / paste files
 - [ ] Move files
 - [ ] Better style

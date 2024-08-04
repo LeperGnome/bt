@@ -107,7 +107,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 		if node.Info.IsDir() {
 			name = color.BlueString(node.Info.Name())
 		}
-		repr := strings.Repeat("    ", depth) + name
+		repr := strings.Repeat("  ", depth) + name
 		if marked && node.Selected == NotSelected {
 			repr += color.YellowString(" <-")
 			selectedRow = cnt
