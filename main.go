@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -16,6 +17,8 @@ type model struct {
 	renderer     *Renderer
 	windowHeight int
 	windowWidth  int
+	moveBuff     *Node
+	statusRow    string
 }
 
 func (m model) Init() tea.Cmd {
@@ -31,6 +34,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+
 		case "j", "down":
 			m.tree.SelectNextChild()
 		case "k", "up":
@@ -42,6 +46,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "h", "left":
 			m.tree.SetParentAsCurrent()
+
+		case "d":
+			m.moveBuff = m.tree.GetSelectedChild()
+			m.statusRow = "moving " + m.moveBuff.Path
+
+		case "p":
+			if m.moveBuff != nil {
+				target := m.tree.CurrentDir.Path
+				cmd := exec.Command("mv", m.moveBuff.Path, target)
+				err := cmd.Run()
+				if err != nil {
+					m.statusRow = "error moving file - " + err.Error()
+				}
+				err = m.tree.CurrentDir.ReadChildren()
+				if err != nil {
+					panic(err) // TODO
+				}
+				err = m.moveBuff.Parent.ReadChildren()
+				if err != nil {
+					panic(err) // TODO
+				}
+				m.moveBuff = nil
+				m.statusRow = ""
+			}
+
 		case "enter":
 			err := m.tree.CollapseOrExpandSelected()
 			if err != nil {
@@ -53,13 +82,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m model) View() string {
 	selected := m.tree.GetSelectedChild()
+	names := []string{}
+	for _, ch := range m.tree.CurrentDir.Children {
+		names = append(names, ch.Info.Name())
+	}
 	header := []string{
 		color.GreenString("> " + selected.Path),
 		color.MagentaString(fmt.Sprintf(
-			"%v : %d bytes",
+			"%v : %d bytes : current = %s : selected idx = %d",
 			selected.Info.ModTime().Format(time.RFC822),
 			selected.Info.Size(),
+			m.tree.CurrentDir.Path, m.tree.CurrentDir.Selected,
 		)),
+		fmt.Sprintf("children: %v", names),
+		":" + m.statusRow,
 	}
 	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
 

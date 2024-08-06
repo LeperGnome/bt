@@ -47,7 +47,7 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 			contentLines = []string{"<binary content>"}
 		} else {
 			contentLines = strings.Split(string(content), "\n")
-			contentLines = contentLines[:min(winHeight, len(contentLines))]
+			contentLines = contentLines[:max(min(winHeight, len(contentLines)), 0)]
 		}
 		renderedStyledTree = lipgloss.JoinHorizontal(
 			0,
@@ -117,7 +117,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 		if node.Children != nil {
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
-				s.Push(stackEl{&ch, depth + 1, i == node.Selected})
+				s.Push(stackEl{ch, depth + 1, i == node.Selected})
 			}
 		}
 	}

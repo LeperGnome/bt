@@ -15,7 +15,7 @@ type Tree struct {
 }
 
 func (t *Tree) GetSelectedChild() *Node {
-	return &t.CurrentDir.Children[t.CurrentDir.Selected]
+	return t.CurrentDir.Children[t.CurrentDir.Selected]
 }
 func (t *Tree) SelectNextChild() {
 	if t.CurrentDir.Selected < len(t.CurrentDir.Children)-1 {
@@ -30,9 +30,9 @@ func (t *Tree) SelectPreviousChild() {
 	}
 }
 func (t *Tree) SetSelectedChildAsCurrent() error {
-	selected := &t.CurrentDir.Children[t.CurrentDir.Selected]
+	selected := t.GetSelectedChild()
 	if selected.Children == nil {
-		err := selected.readChildren()
+		err := selected.ReadChildren()
 		if err != nil {
 			return err
 		}
@@ -50,11 +50,11 @@ func (t *Tree) SetParentAsCurrent() {
 	}
 }
 func (t *Tree) CollapseOrExpandSelected() error {
-	selectedNode := &t.CurrentDir.Children[t.CurrentDir.Selected]
+	selectedNode := t.GetSelectedChild()
 	if selectedNode.Children != nil {
 		selectedNode.orphanChildren()
 	} else {
-		err := selectedNode.readChildren()
+		err := selectedNode.ReadChildren()
 		if err != nil {
 			return err
 		}
@@ -75,10 +75,10 @@ func InitTree(dir string) (Tree, error) {
 		Path:     dir,
 		Info:     rootInfo,
 		Parent:   nil,
-		Children: []Node{},
+		Children: []*Node{},
 	}
 
-	err = root.readChildren()
+	err = root.ReadChildren()
 	if err != nil {
 		return tree, err
 	}
@@ -92,13 +92,13 @@ func InitTree(dir string) (Tree, error) {
 type Node struct {
 	Path     string
 	Info     fs.FileInfo
-	Children []Node // nil - not read or it's a file
+	Children []*Node // nil - not read or it's a file
 	Parent   *Node
 	Selected int
 	smem     int
 }
 
-func (n *Node) readChildren() error {
+func (n *Node) ReadChildren() error {
 	if !n.Info.IsDir() {
 		return nil
 	}
@@ -106,19 +106,34 @@ func (n *Node) readChildren() error {
 	if err != nil {
 		return err
 	}
-	chNodes := make([]Node, 0, len(children))
+	chNodes := []*Node{}
+
 	for _, ch := range children {
+		ch := ch
 		chInfo, err := ch.Info()
 		if err != nil {
 			return err
 		}
-		chNodes = append(chNodes, Node{
-			Path:     filepath.Join(n.Path, chInfo.Name()),
-			Info:     chInfo,
-			Children: nil,
-			Parent:   n,
-			Selected: NotSelected,
-		})
+		// Looking if child already exist
+		var childToAdd *Node
+		if n.Children != nil {
+			for _, ech := range n.Children {
+				if ech.Info.Name() == chInfo.Name() {
+					childToAdd = ech
+					break
+				}
+			}
+		}
+		if childToAdd == nil {
+			childToAdd = &Node{
+				Path:     filepath.Join(n.Path, chInfo.Name()),
+				Info:     chInfo,
+				Children: nil,
+				Parent:   n,
+				Selected: NotSelected,
+			}
+		}
+		chNodes = append(chNodes, childToAdd)
 	}
 	n.Children = chNodes
 	return nil
