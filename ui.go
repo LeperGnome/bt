@@ -108,7 +108,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			name = color.BlueString(node.Info.Name())
 		}
 		repr := strings.Repeat("  ", depth) + name
-		if marked && node.Selected == NotSelected {
+		if marked && node.SelectedChildIdx == NotSelected {
 			repr += color.YellowString(" <-")
 			selectedRow = cnt
 		}
@@ -117,7 +117,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 		if node.Children != nil {
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
-				s.Push(stackEl{ch, depth + 1, i == node.Selected})
+				s.Push(stackEl{ch, depth + 1, i == node.SelectedChildIdx && tree.CurrentDir == node})
 			}
 		}
 	}

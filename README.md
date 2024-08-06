@@ -9,7 +9,7 @@ todo:
 - [x] Scrolling trees, that don't fit the screen
 - [ ] Copy / paste files
 - [x] Move files
-- [ ] Fix current on file movement to directory which is after it
+- [x] Fix current on file movement to directory which is after it
 - [ ] Better style
 - [ ] Inline file permissions and size?
 

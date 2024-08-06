@@ -82,19 +82,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m model) View() string {
 	selected := m.tree.GetSelectedChild()
-	names := []string{}
-	for _, ch := range m.tree.CurrentDir.Children {
-		names = append(names, ch.Info.Name())
-	}
 	header := []string{
 		color.GreenString("> " + selected.Path),
 		color.MagentaString(fmt.Sprintf(
 			"%v : %d bytes : current = %s : selected idx = %d",
 			selected.Info.ModTime().Format(time.RFC822),
 			selected.Info.Size(),
-			m.tree.CurrentDir.Path, m.tree.CurrentDir.Selected,
+			m.tree.CurrentDir.Path, m.tree.CurrentDir.SelectedChildIdx,
 		)),
-		fmt.Sprintf("children: %v", names),
 		":" + m.statusRow,
 	}
 	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
