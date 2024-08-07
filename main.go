@@ -48,10 +48,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tree.SetParentAsCurrent()
 
 		case "d":
-			m.moveBuff = m.tree.GetSelectedChild()
-			m.statusRow = "moving " + m.moveBuff.Path
+			selected := m.tree.GetSelectedChild()
+			if selected != nil {
+				m.moveBuff = selected
+				m.statusRow = "moving " + selected.Path
+			}
 
 		case "p":
+			// TODO: move to tree method?
 			if m.moveBuff != nil {
 				target := m.tree.CurrentDir.Path
 				cmd := exec.Command("mv", m.moveBuff.Path, target)
@@ -82,13 +86,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m model) View() string {
 	selected := m.tree.GetSelectedChild()
+	path := m.tree.CurrentDir.Path + "/..."
+	changeTime := "--"
+	size := int64(0)
+	if selected != nil {
+		path = selected.Path
+		changeTime = selected.Info.ModTime().Format(time.RFC822)
+		size = selected.Info.Size()
+	}
 	header := []string{
-		color.GreenString("> " + selected.Path),
+		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
-			"%v : %d bytes : current = %s : selected idx = %d",
-			selected.Info.ModTime().Format(time.RFC822),
-			selected.Info.Size(),
-			m.tree.CurrentDir.Path, m.tree.CurrentDir.SelectedChildIdx,
+			"%v : %d bytes",
+			changeTime,
+			size,
 		)),
 		":" + m.statusRow,
 	}

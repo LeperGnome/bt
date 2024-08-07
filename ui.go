@@ -28,7 +28,7 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 
 	// rendering file content
 	selectedNode := tree.GetSelectedChild()
-	if selectedNode.Info.Mode().IsRegular() {
+	if selectedNode != nil && selectedNode.Info.Mode().IsRegular() {
 		content, err := os.ReadFile(selectedNode.Path)
 		if err != nil {
 			return renderedStyledTree
@@ -87,10 +87,9 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 	type stackEl struct {
 		*Node
 		int
-		bool
 	}
 	lines := []string{}
-	s := newStack(stackEl{tree.Root, 0, false})
+	s := newStack(stackEl{tree.Root, 0})
 
 	for s.Len() > 0 {
 		el := s.Pop()
@@ -98,7 +97,6 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 
 		node := el.Node
 		depth := el.int
-		marked := el.bool
 
 		if node == nil {
 			continue
@@ -108,16 +106,20 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			name = color.BlueString(node.Info.Name())
 		}
 		repr := strings.Repeat("  ", depth) + name
-		if marked && node.SelectedChildIdx == NotSelected {
+		if tree.GetSelectedChild() == node {
 			repr += color.YellowString(" <-")
 			selectedRow = cnt
 		}
 		lines = append(lines, repr)
 
 		if node.Children != nil {
+			// current directory is empty
+			if len(node.Children) == 0 && tree.CurrentDir == node {
+				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+color.YellowString(" <-"))
+			}
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
-				s.Push(stackEl{ch, depth + 1, i == node.SelectedChildIdx && tree.CurrentDir == node})
+				s.Push(stackEl{ch, depth + 1})
 			}
 		}
 	}

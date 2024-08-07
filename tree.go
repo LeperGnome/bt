@@ -8,40 +8,42 @@ import (
 	"slices"
 )
 
-const NotSelected = -1
-
 type Tree struct {
 	Root       *Node
 	CurrentDir *Node
 }
 
 func (t *Tree) GetSelectedChild() *Node {
-	return t.CurrentDir.Children[t.CurrentDir.SelectedChildIdx]
+	if len(t.CurrentDir.Children) > 0 {
+		return t.CurrentDir.Children[t.CurrentDir.selectedChildIdx]
+	}
+	return nil
 }
 func (t *Tree) SelectNextChild() {
-	if t.CurrentDir.SelectedChildIdx < len(t.CurrentDir.Children)-1 {
-		t.CurrentDir.SelectedChildIdx += 1
-		t.CurrentDir.smem += 1
+	if t.CurrentDir.selectedChildIdx < len(t.CurrentDir.Children)-1 {
+		t.CurrentDir.selectedChildIdx += 1
 	}
 }
 func (t *Tree) SelectPreviousChild() {
-	if t.CurrentDir.SelectedChildIdx > 0 {
-		t.CurrentDir.SelectedChildIdx -= 1
-		t.CurrentDir.smem -= 1
+	if t.CurrentDir.selectedChildIdx > 0 {
+		t.CurrentDir.selectedChildIdx -= 1
 	}
 }
 func (t *Tree) SetSelectedChildAsCurrent() error {
 	selectedChild := t.GetSelectedChild()
+	if selectedChild == nil {
+		return nil
+	}
+	if !selectedChild.Info.IsDir() {
+		return nil
+	}
 	if selectedChild.Children == nil {
 		err := selectedChild.ReadChildren()
 		if err != nil {
 			return err
 		}
 	}
-	if len(selectedChild.Children) > 0 {
-		t.CurrentDir = selectedChild
-		t.CurrentDir.SelectedChildIdx = t.CurrentDir.smem
-	}
+	t.CurrentDir = selectedChild
 	return nil
 }
 func (t *Tree) SetParentAsCurrent() {
@@ -49,15 +51,16 @@ func (t *Tree) SetParentAsCurrent() {
 		currentName := t.CurrentDir.Info.Name()
 		// setting parent current to match the directory, that we're leaving
 		newParentIdx := slices.IndexFunc(t.CurrentDir.Parent.Children, func(n *Node) bool { return n.Info.Name() == currentName })
-		t.CurrentDir.Parent.SelectedChildIdx = newParentIdx
-		t.CurrentDir.Parent.smem = newParentIdx
+		t.CurrentDir.Parent.selectedChildIdx = newParentIdx
 
-		t.CurrentDir.SelectedChildIdx = NotSelected
 		t.CurrentDir = t.CurrentDir.Parent
 	}
 }
 func (t *Tree) CollapseOrExpandSelected() error {
 	selectedChild := t.GetSelectedChild()
+	if selectedChild == nil {
+		return nil
+	}
 	if selectedChild.Children != nil {
 		selectedChild.orphanChildren()
 	} else {
@@ -101,8 +104,7 @@ type Node struct {
 	Info             fs.FileInfo
 	Children         []*Node // nil - not read or it's a file
 	Parent           *Node
-	SelectedChildIdx int
-	smem             int
+	selectedChildIdx int
 }
 
 func (n *Node) ReadChildren() error {
@@ -133,19 +135,20 @@ func (n *Node) ReadChildren() error {
 		}
 		if childToAdd == nil {
 			childToAdd = &Node{
-				Path:             filepath.Join(n.Path, chInfo.Name()),
-				Info:             chInfo,
-				Children:         nil,
-				Parent:           n,
-				SelectedChildIdx: NotSelected,
+				Path:     filepath.Join(n.Path, chInfo.Name()),
+				Info:     chInfo,
+				Children: nil,
+				Parent:   n,
 			}
 		}
 		chNodes = append(chNodes, childToAdd)
 	}
 	n.Children = chNodes
+
+	// updateing selected child index if it's out of bounds after update
+	n.selectedChildIdx = max(min(n.selectedChildIdx, len(n.Children)-1), 0)
 	return nil
 }
 func (n *Node) orphanChildren() {
 	n.Children = nil
-	n.SelectedChildIdx = NotSelected
 }
