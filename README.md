@@ -13,6 +13,7 @@ todo:
 - [ ] Copy / paste files
 - [ ] Better style
 - [ ] Inline file permissions and size?
+- [ ] Handle fs updates?
 
 - [ ] Project structure
 - [ ] Tests

@@ -28,33 +28,34 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 
 	// rendering file content
 	selectedNode := tree.GetSelectedChild()
-	if selectedNode != nil && selectedNode.Info.Mode().IsRegular() {
-		content, err := os.ReadFile(selectedNode.Path)
-		if err != nil {
-			return renderedStyledTree
-		}
-		leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
-		contentStyle := lipgloss.
-			NewStyle().
-			Italic(true).
-			MarginLeft(leftMargin).
-			MaxWidth(sectionWidth + leftMargin - 1).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderLeft(true)
-
-		var contentLines []string
-		if !utf8.Valid(content) {
-			contentLines = []string{"<binary content>"}
-		} else {
-			contentLines = strings.Split(string(content), "\n")
-			contentLines = contentLines[:max(min(winHeight, len(contentLines)), 0)]
-		}
-		renderedStyledTree = lipgloss.JoinHorizontal(
-			0,
-			renderedStyledTree,
-			contentStyle.Render(strings.Join(contentLines, "\n")),
-		)
+	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {
+		return renderedStyledTree
 	}
+	content, err := os.ReadFile(selectedNode.Path)
+	if err != nil {
+		return renderedStyledTree
+	}
+	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
+	contentStyle := lipgloss.
+		NewStyle().
+		Italic(true).
+		MarginLeft(leftMargin).
+		MaxWidth(sectionWidth + leftMargin - 1).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderLeft(true)
+
+	var contentLines []string
+	if !utf8.Valid(content) {
+		contentLines = []string{"<binary content>"}
+	} else {
+		contentLines = strings.Split(string(content), "\n")
+		contentLines = contentLines[:max(min(winHeight, len(contentLines)), 0)]
+	}
+	renderedStyledTree = lipgloss.JoinHorizontal(
+		0,
+		renderedStyledTree,
+		contentStyle.Render(strings.Join(contentLines, "\n")),
+	)
 	return renderedStyledTree
 }
 
