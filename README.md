@@ -10,7 +10,9 @@ todo:
 - [x] Move files
 - [x] Fix current on file movement to directory which is after it
 - [x] Jump into empty directories
-- [ ] Copy / paste files
+- [x] Copy / paste files
+- [ ] Not reading whole file contents, only fix size, also cache (?)
+- [ ] Fix strange offset with empty dir
 - [ ] Better style
 - [ ] Inline file permissions and size?
 - [ ] Handle fs updates?
