@@ -11,13 +11,25 @@ import (
 	"github.com/fatih/color"
 )
 
+type Operation int
+
+const (
+	Noop Operation = iota
+	Move
+	Copy
+)
+
+func (o Operation) Repr() string {
+	return []string{"", "moving", "copying"}[o]
+}
+
 type model struct {
 	tree         *Tree
 	renderer     *Renderer
 	windowHeight int
 	windowWidth  int
-	moveBuff     *Node
 	statusRow    string
+	opBuf        Operation
 }
 
 func (m model) Init() tea.Cmd {
@@ -45,16 +57,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "h", "left":
 			m.tree.SetParentAsCurrent()
+		case "y":
+			m.tree.MarkSelectedChild()
+			m.opBuf = Copy
 		case "d":
 			m.tree.MarkSelectedChild()
-			m.statusRow = "moving " + m.tree.Marked.Path
+			m.opBuf = Move
 		case "p":
-			err := m.tree.MoveMarkedToCurrentDir()
-			if err != nil {
-				m.statusRow = err.Error()
-			} else {
-				m.statusRow = ""
+			switch m.opBuf {
+			case Noop:
+				break
+			case Move:
+				err := m.tree.MoveMarkedToCurrentDir()
+				if err != nil {
+					panic(err) // TODO
+				}
+			case Copy:
+				err := m.tree.CopyMarkedToCurrentDir()
+				if err != nil {
+					panic(err) // TODO
+				}
 			}
+			m.opBuf = Noop
 		case "enter":
 			err := m.tree.CollapseOrExpandSelected()
 			if err != nil {
@@ -74,6 +98,10 @@ func (m model) View() string {
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = selected.Info.Size()
 	}
+	markedPath := ""
+	if m.tree.Marked != nil {
+		markedPath = m.tree.Marked.Path
+	}
 	header := []string{
 		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
@@ -81,7 +109,7 @@ func (m model) View() string {
 			changeTime,
 			size,
 		)),
-		":" + m.statusRow,
+		fmt.Sprintf(": %s %s", m.opBuf.Repr(), markedPath),
 	}
 	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
 

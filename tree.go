@@ -15,34 +15,6 @@ type Tree struct {
 	Marked     *Node // not sure...
 }
 
-func (t *Tree) MarkSelectedChild() {
-	if selected := t.GetSelectedChild(); selected != nil {
-		t.Marked = selected
-	}
-}
-
-func (t *Tree) MoveMarkedToCurrentDir() error {
-	if t.Marked == nil {
-		return nil
-	}
-	target := t.CurrentDir.Path
-	cmd := exec.Command("mv", t.Marked.Path, target)
-	err := cmd.Run()
-	if err != nil {
-		return err // todo: this is not the same error...?
-	}
-	err = t.CurrentDir.ReadChildren()
-	if err != nil {
-		return err
-	}
-	err = t.Marked.Parent.ReadChildren()
-	if err != nil {
-		return err
-	}
-	t.Marked = nil
-	return nil
-}
-
 func (t *Tree) GetSelectedChild() *Node {
 	if len(t.CurrentDir.Children) > 0 {
 		return t.CurrentDir.Children[t.CurrentDir.selectedChildIdx]
@@ -85,6 +57,50 @@ func (t *Tree) SetParentAsCurrent() {
 
 		t.CurrentDir = t.CurrentDir.Parent
 	}
+}
+func (t *Tree) MarkSelectedChild() {
+	if selected := t.GetSelectedChild(); selected != nil {
+		t.Marked = selected
+	}
+}
+func (t *Tree) CopyMarkedToCurrentDir() error {
+	if t.Marked == nil {
+		return nil
+	}
+	target := t.CurrentDir.Path
+	// TODO conflicting names
+	cmd := exec.Command("cp", t.Marked.Path, target)
+	err := cmd.Run()
+	if err != nil {
+		return err // todo: this is not the same error...?
+	}
+	err = t.CurrentDir.ReadChildren()
+	if err != nil {
+		return err
+	}
+	t.Marked = nil
+	return nil
+}
+func (t *Tree) MoveMarkedToCurrentDir() error {
+	if t.Marked == nil {
+		return nil
+	}
+	target := t.CurrentDir.Path
+	cmd := exec.Command("mv", t.Marked.Path, target)
+	err := cmd.Run()
+	if err != nil {
+		return err // todo: this is not the same error...?
+	}
+	err = t.CurrentDir.ReadChildren()
+	if err != nil {
+		return err
+	}
+	err = t.Marked.Parent.ReadChildren()
+	if err != nil {
+		return err
+	}
+	t.Marked = nil
+	return nil
 }
 func (t *Tree) CollapseOrExpandSelected() error {
 	selectedChild := t.GetSelectedChild()
