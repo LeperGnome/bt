@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 )
@@ -11,6 +12,35 @@ import (
 type Tree struct {
 	Root       *Node
 	CurrentDir *Node
+	Marked     *Node // not sure...
+}
+
+func (t *Tree) MarkSelectedChild() {
+	if selected := t.GetSelectedChild(); selected != nil {
+		t.Marked = selected
+	}
+}
+
+func (t *Tree) MoveMarkedToCurrentDir() error {
+	if t.Marked == nil {
+		return nil
+	}
+	target := t.CurrentDir.Path
+	cmd := exec.Command("mv", t.Marked.Path, target)
+	err := cmd.Run()
+	if err != nil {
+		return err // todo: this is not the same error...?
+	}
+	err = t.CurrentDir.ReadChildren()
+	if err != nil {
+		return err
+	}
+	err = t.Marked.Parent.ReadChildren()
+	if err != nil {
+		return err
+	}
+	t.Marked = nil
+	return nil
 }
 
 func (t *Tree) GetSelectedChild() *Node {

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -46,35 +45,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "h", "left":
 			m.tree.SetParentAsCurrent()
-
 		case "d":
-			selected := m.tree.GetSelectedChild()
-			if selected != nil {
-				m.moveBuff = selected
-				m.statusRow = "moving " + selected.Path
-			}
-
+			m.tree.MarkSelectedChild()
+			m.statusRow = "moving " + m.tree.Marked.Path
 		case "p":
-			// TODO: move to tree method?
-			if m.moveBuff != nil {
-				target := m.tree.CurrentDir.Path
-				cmd := exec.Command("mv", m.moveBuff.Path, target)
-				err := cmd.Run()
-				if err != nil {
-					m.statusRow = "error moving file - " + err.Error()
-				}
-				err = m.tree.CurrentDir.ReadChildren()
-				if err != nil {
-					panic(err) // TODO
-				}
-				err = m.moveBuff.Parent.ReadChildren()
-				if err != nil {
-					panic(err) // TODO
-				}
-				m.moveBuff = nil
+			err := m.tree.MoveMarkedToCurrentDir()
+			if err != nil {
+				m.statusRow = err.Error()
+			} else {
 				m.statusRow = ""
 			}
-
 		case "enter":
 			err := m.tree.CollapseOrExpandSelected()
 			if err != nil {
