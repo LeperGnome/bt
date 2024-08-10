@@ -9,7 +9,11 @@ import (
 	"github.com/fatih/color"
 )
 
-const previewBytesLimit int64 = 10_000
+const (
+	previewBytesLimit int64 = 10_000
+	minHeight               = 10
+	minWidth                = 10
+)
 
 type Renderer struct {
 	EdgePadding int
@@ -17,11 +21,16 @@ type Renderer struct {
 }
 
 func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
-	// rendering tree
-	renderedTree, selectedRow := r.renderTree(tree)
-	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
+	if winWidth < minWidth || winHeight < minHeight {
+		return "too small =(\n"
+	}
 
 	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
+
+	// rendering tree
+	renderedTree, selectedRow := r.renderTree(tree, sectionWidth)
+	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
+
 	treeStyle := lipgloss.
 		NewStyle().
 		MaxWidth(sectionWidth)
@@ -81,9 +90,9 @@ func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) [
 }
 
 // Returns lines as slice and index of selected line
-func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
-	cnt := -1
-	selectedRow := 0
+func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
+	linen := -1
+	currentLine := 0
 
 	type stackEl struct {
 		*Node
@@ -94,7 +103,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 
 	for s.Len() > 0 {
 		el := s.Pop()
-		cnt += 1
+		linen += 1
 
 		node := el.Node
 		depth := el.int
@@ -107,9 +116,13 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			name = color.BlueString(node.Info.Name())
 		}
 		repr := strings.Repeat("  ", depth) + name
+		if utf8.RuneCountInString(repr) > widthLim-6 { // 6 = len([]rune{"... <-"})
+			repr = string([]rune(repr)[:widthLim-6]) + "..."
+		}
+
 		if tree.GetSelectedChild() == node {
 			repr += color.YellowString(" <-")
-			selectedRow = cnt
+			currentLine = linen
 		}
 		lines = append(lines, repr)
 
@@ -117,7 +130,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
 				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+color.YellowString(" <-"))
-				selectedRow = cnt + 1
+				currentLine = linen + 1
 			}
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
@@ -125,7 +138,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			}
 		}
 	}
-	return lines, selectedRow
+	return lines, currentLine
 }
 
 type stack[T any] struct {
