@@ -25,6 +25,8 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 		return "too small =(\n"
 	}
 
+	// section is half a screen, devided vertically
+	// left for tree, right for file preview
 	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
 
 	// rendering tree
@@ -68,6 +70,7 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 	return renderedStyledTree
 }
 
+// Crops tree lines, such that current line is visible and view is consistent.
 func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) []string {
 	linesLen := len(lines)
 
@@ -89,7 +92,7 @@ func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) [
 	return lines[offset:limit]
 }
 
-// Returns lines as slice and index of selected line
+// Returns lines as slice and index of selected line.
 func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
 	linen := -1
 	currentLine := 0
