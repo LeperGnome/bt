@@ -92,11 +92,11 @@ func (m model) View() string {
 	selected := m.tree.GetSelectedChild()
 	path := m.tree.CurrentDir.Path + "/..."
 	changeTime := "--"
-	size := int64(0)
+	size := "0 B"
 	if selected != nil {
 		path = selected.Path
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
-		size = selected.Info.Size()
+		size = formatSize(float64(selected.Info.Size()), 1024.0)
 	}
 	markedPath := ""
 	if m.tree.Marked != nil {
@@ -105,7 +105,7 @@ func (m model) View() string {
 	header := []string{
 		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
-			"%v : %d bytes",
+			"%v : %s",
 			changeTime,
 			size,
 		)),
@@ -121,6 +121,22 @@ func newModel(tree Tree, renderer Renderer) model {
 		tree:     &tree,
 		renderer: &renderer,
 	}
+}
+
+var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
+
+func formatSize(s float64, base float64) string {
+	unitsLimit := len(sizes)
+	i := 0
+	for s >= base && i < unitsLimit {
+		s = s / base
+		i++
+	}
+	f := "%.0f %s"
+	if i > 1 {
+		f = "%.2f %s"
+	}
+	return fmt.Sprintf(f, s, sizes[i])
 }
 
 func main() {

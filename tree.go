@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -20,6 +21,23 @@ func (t *Tree) GetSelectedChild() *Node {
 		return t.CurrentDir.Children[t.CurrentDir.selectedChildIdx]
 	}
 	return nil
+}
+func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
+	selectedNode := t.GetSelectedChild()
+	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {
+		return 0, fmt.Errorf("file not selected or is irregular")
+	}
+	f, err := os.Open(selectedNode.Path)
+	defer f.Close()
+	if err != nil {
+		return 0, err
+	}
+	limitedReader := io.LimitReader(f, limit)
+	n, err := limitedReader.Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 func (t *Tree) SelectNextChild() {
 	if t.CurrentDir.selectedChildIdx < len(t.CurrentDir.Children)-1 {

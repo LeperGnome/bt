@@ -2,13 +2,14 @@ package main
 
 import (
 	"math"
-	"os"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 )
+
+const previewBytesLimit int64 = 10_000
 
 type Renderer struct {
 	EdgePadding int
@@ -27,14 +28,13 @@ func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
 	renderedStyledTree := treeStyle.Render(strings.Join(croppedTree, "\n"))
 
 	// rendering file content
-	selectedNode := tree.GetSelectedChild()
-	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {
-		return renderedStyledTree
-	}
-	content, err := os.ReadFile(selectedNode.Path)
+	content := make([]byte, previewBytesLimit)
+	n, err := tree.ReadSelectedChildContent(content, previewBytesLimit)
 	if err != nil {
 		return renderedStyledTree
 	}
+	content = content[:n]
+
 	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
 	contentStyle := lipgloss.
 		NewStyle().
@@ -117,6 +117,7 @@ func (r *Renderer) renderTree(tree *Tree) ([]string, int) {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
 				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+color.YellowString(" <-"))
+				selectedRow = cnt + 1
 			}
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
