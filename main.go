@@ -44,9 +44,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "esc":
+			m.tree.DropMark()
+			m.opBuf = Noop
 		case "ctrl+c", "q":
 			return m, tea.Quit
-
 		case "j", "down":
 			m.tree.SelectNextChild()
 		case "k", "up":
@@ -75,7 +77,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					panic(err) // TODO
 				}
 				m.opBuf = Noop
-			case Noop:
+			default:
 				m.tree.MarkSelectedChild()
 				m.opBuf = Copy
 			}
@@ -112,18 +114,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m model) View() string {
 	selected := m.tree.GetSelectedChild()
+
+	// NOTE: special case for empty dir
 	path := m.tree.CurrentDir.Path + "/..."
 	changeTime := "--"
 	size := "0 B"
+
 	if selected != nil {
 		path = selected.Path
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 	}
+
 	markedPath := ""
 	if m.tree.Marked != nil {
 		markedPath = m.tree.Marked.Path
 	}
+
 	header := []string{
 		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
