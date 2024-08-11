@@ -81,14 +81,38 @@ func (t *Tree) MarkSelectedChild() {
 		t.Marked = selected
 	}
 }
+func (t *Tree) DropMark() {
+	t.Marked = nil
+}
+func (t *Tree) DeleteMarked() error {
+	if t.Marked == nil {
+		return nil
+	}
+	cmd := exec.Command("rm", "-r", t.Marked.Path)
+	err := cmd.Run()
+	if err != nil {
+		return err // todo: this is not the same error...?
+	}
+	err = t.Marked.Parent.ReadChildren()
+	if err != nil {
+		return err
+	}
+	t.Marked = nil
+	return nil
+}
 func (t *Tree) CopyMarkedToCurrentDir() error {
 	if t.Marked == nil {
 		return nil
 	}
-	target := t.CurrentDir.Path
-	// TODO conflicting names
-	cmd := exec.Command("cp", t.Marked.Path, target)
-	err := cmd.Run()
+	targetDir := t.CurrentDir.Path
+	targetFileName, err := generateNewFileName(t.Marked.Info.Name(), targetDir)
+	if err != nil {
+		return err
+	}
+	targetPath := filepath.Join(targetDir, targetFileName)
+
+	cmd := exec.Command("cp", "-r", t.Marked.Path, targetPath)
+	err = cmd.Run()
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
@@ -103,9 +127,15 @@ func (t *Tree) MoveMarkedToCurrentDir() error {
 	if t.Marked == nil {
 		return nil
 	}
-	target := t.CurrentDir.Path
-	cmd := exec.Command("mv", t.Marked.Path, target)
-	err := cmd.Run()
+	targetDir := t.CurrentDir.Path
+	targetFileName, err := generateNewFileName(t.Marked.Info.Name(), targetDir)
+	if err != nil {
+		return err
+	}
+	targetPath := filepath.Join(targetDir, targetFileName)
+
+	cmd := exec.Command("mv", t.Marked.Path, targetPath)
+	err = cmd.Run()
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
@@ -215,4 +245,17 @@ func (n *Node) ReadChildren() error {
 }
 func (n *Node) orphanChildren() {
 	n.Children = nil
+}
+
+// Checks if fname already exists in targetDir.
+// Adds "copy_" prefix (multiple times), until new file name becomes unique in derecotry.
+func generateNewFileName(fname, targetDir string) (string, error) {
+	currentDirContent, err := os.ReadDir(targetDir)
+	if err != nil {
+		return "", err
+	}
+	for slices.ContainsFunc(currentDirContent, func(e fs.DirEntry) bool { return e.Name() == fname }) {
+		fname = "copy_" + fname
+	}
+	return fname, nil
 }

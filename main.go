@@ -17,10 +17,11 @@ const (
 	Noop Operation = iota
 	Move
 	Copy
+	Delete
 )
 
 func (o Operation) Repr() string {
-	return []string{"", "moving", "copying"}[o]
+	return []string{"", "moving", "copying", "confirm removing (y/n) of"}[o]
 }
 
 type model struct {
@@ -57,12 +58,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "h", "left":
 			m.tree.SetParentAsCurrent()
+
+		case "n":
+			// TODO: confirmation dialog?
+			switch m.opBuf {
+			case Delete:
+				m.tree.DropMark()
+				m.opBuf = Noop
+			}
 		case "y":
-			m.tree.MarkSelectedChild()
-			m.opBuf = Copy
+			// TODO: confirmation dialog?
+			switch m.opBuf {
+			case Delete:
+				err := m.tree.DeleteMarked()
+				if err != nil {
+					panic(err) // TODO
+				}
+				m.opBuf = Noop
+			case Noop:
+				m.tree.MarkSelectedChild()
+				m.opBuf = Copy
+			}
 		case "d":
 			m.tree.MarkSelectedChild()
 			m.opBuf = Move
+		case "D":
+			m.tree.MarkSelectedChild()
+			m.opBuf = Delete
 		case "p":
 			switch m.opBuf {
 			case Noop:

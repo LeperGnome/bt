@@ -13,7 +13,8 @@ todo:
 - [x] Copy / paste files
 - [x] Not reading whole file contents, only fix size
 - [x] Fix strange offset with empty dir
-- [ ] Remove files
+- [~] Remove files (kinda done)
+- [~] Resolve filename conflicts (kinda done)
 - [ ] Better style
 - [ ] Inline file permissions and size?
 - [ ] Handle fs updates?
