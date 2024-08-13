@@ -36,79 +36,103 @@ type model struct {
 func (m model) Init() tea.Cmd {
 	return nil
 }
+func (m model) ProcessKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.opBuf {
+	case Noop:
+		return m.processKeyDefault(msg)
+	case Move:
+		return m.processKeyMove(msg)
+	case Delete:
+		return m.processKeyDelete(msg)
+	case Copy:
+		return m.processKeyCopy(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyDelete(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "y":
+		err := m.tree.DeleteMarked()
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+	default:
+		m.opBuf = Noop
+		m.tree.DropMark()
+		return m.processKeyDefault(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyMove(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "p":
+		err := m.tree.MoveMarkedToCurrentDir()
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+	default:
+		return m.processKeyDefault(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyCopy(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "p":
+		err := m.tree.CopyMarkedToCurrentDir()
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+	default:
+		return m.processKeyDefault(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyDefault(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.tree.DropMark()
+		m.opBuf = Noop
+	case "ctrl+c", "q":
+		return m, tea.Quit
+	case "j", "down":
+		m.tree.SelectNextChild()
+	case "k", "up":
+		m.tree.SelectPreviousChild()
+	case "l", "right":
+		err := m.tree.SetSelectedChildAsCurrent()
+		if err != nil {
+			panic(err) // TODO
+		}
+	case "h", "left":
+		m.tree.SetParentAsCurrent()
+	case "y":
+		m.tree.MarkSelectedChild()
+		m.opBuf = Copy
+	case "d":
+		m.tree.MarkSelectedChild()
+		m.opBuf = Move
+	case "D":
+		m.tree.MarkSelectedChild()
+		m.opBuf = Delete
+	case "enter":
+		err := m.tree.CollapseOrExpandSelected()
+		if err != nil {
+			panic(err) // TODO
+		}
+	}
+	return m, nil
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.windowHeight = msg.Height
 		m.windowWidth = msg.Width
-
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			m.tree.DropMark()
-			m.opBuf = Noop
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		case "j", "down":
-			m.tree.SelectNextChild()
-		case "k", "up":
-			m.tree.SelectPreviousChild()
-		case "l", "right":
-			err := m.tree.SetSelectedChildAsCurrent()
-			if err != nil {
-				panic(err) // TODO
-			}
-		case "h", "left":
-			m.tree.SetParentAsCurrent()
-
-		case "n":
-			// TODO: confirmation dialog?
-			switch m.opBuf {
-			case Delete:
-				m.tree.DropMark()
-				m.opBuf = Noop
-			}
-		case "y":
-			// TODO: confirmation dialog?
-			switch m.opBuf {
-			case Delete:
-				err := m.tree.DeleteMarked()
-				if err != nil {
-					panic(err) // TODO
-				}
-				m.opBuf = Noop
-			default:
-				m.tree.MarkSelectedChild()
-				m.opBuf = Copy
-			}
-		case "d":
-			m.tree.MarkSelectedChild()
-			m.opBuf = Move
-		case "D":
-			m.tree.MarkSelectedChild()
-			m.opBuf = Delete
-		case "p":
-			switch m.opBuf {
-			case Noop:
-				break
-			case Move:
-				err := m.tree.MoveMarkedToCurrentDir()
-				if err != nil {
-					panic(err) // TODO
-				}
-			case Copy:
-				err := m.tree.CopyMarkedToCurrentDir()
-				if err != nil {
-					panic(err) // TODO
-				}
-			}
-			m.opBuf = Noop
-		case "enter":
-			err := m.tree.CollapseOrExpandSelected()
-			if err != nil {
-				panic(err) // TODO
-			}
-		}
+		return m.ProcessKey(msg)
 	}
 	return m, nil
 }
