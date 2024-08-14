@@ -8,12 +8,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 type Tree struct {
-	Root       *Node
-	CurrentDir *Node
-	Marked     *Node // not sure...
+	Root        *Node
+	CurrentDir  *Node
+	Marked      *Node
+	sortingFunc NodeSortingFunc
 }
 
 func (t *Tree) GetSelectedChild() *Node {
@@ -58,7 +60,7 @@ func (t *Tree) SetSelectedChildAsCurrent() error {
 		return nil
 	}
 	if selectedChild.Children == nil {
-		err := selectedChild.ReadChildren()
+		err := selectedChild.readChildren(t.sortingFunc)
 		if err != nil {
 			return err
 		}
@@ -93,7 +95,7 @@ func (t *Tree) DeleteMarked() error {
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
-	err = t.Marked.Parent.ReadChildren()
+	err = t.Marked.Parent.readChildren(t.sortingFunc)
 	if err != nil {
 		return err
 	}
@@ -116,7 +118,7 @@ func (t *Tree) CopyMarkedToCurrentDir() error {
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
-	err = t.CurrentDir.ReadChildren()
+	err = t.CurrentDir.readChildren(t.sortingFunc)
 	if err != nil {
 		return err
 	}
@@ -139,11 +141,11 @@ func (t *Tree) MoveMarkedToCurrentDir() error {
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
-	err = t.CurrentDir.ReadChildren()
+	err = t.CurrentDir.readChildren(t.sortingFunc)
 	if err != nil {
 		return err
 	}
-	err = t.Marked.Parent.ReadChildren()
+	err = t.Marked.Parent.readChildren(t.sortingFunc)
 	if err != nil {
 		return err
 	}
@@ -158,7 +160,7 @@ func (t *Tree) CollapseOrExpandSelected() error {
 	if selectedChild.Children != nil {
 		selectedChild.orphanChildren()
 	} else {
-		err := selectedChild.ReadChildren()
+		err := selectedChild.readChildren(t.sortingFunc)
 		if err != nil {
 			return err
 		}
@@ -166,7 +168,7 @@ func (t *Tree) CollapseOrExpandSelected() error {
 	return nil
 }
 
-func InitTree(dir string) (Tree, error) {
+func InitTree(dir string, sortingFunc NodeSortingFunc) (Tree, error) {
 	var tree Tree
 	rootInfo, err := os.Lstat(dir)
 	if err != nil {
@@ -175,6 +177,10 @@ func InitTree(dir string) (Tree, error) {
 	if !rootInfo.IsDir() {
 		return tree, fmt.Errorf("%s is not a directory", dir)
 	}
+	if sortingFunc == nil {
+		sortingFunc = defaultNodeSorting
+	}
+
 	root := &Node{
 		Path:     dir,
 		Info:     rootInfo,
@@ -182,16 +188,19 @@ func InitTree(dir string) (Tree, error) {
 		Children: []*Node{},
 	}
 
-	err = root.ReadChildren()
+	err = root.readChildren(sortingFunc)
 	if err != nil {
 		return tree, err
 	}
 	if len(root.Children) == 0 {
 		return tree, fmt.Errorf("Can't initialize on empty directory '%s'", dir)
 	}
-	tree = Tree{Root: root, CurrentDir: root}
+
+	tree = Tree{Root: root, CurrentDir: root, sortingFunc: sortingFunc}
 	return tree, nil
 }
+
+type NodeSortingFunc func(a, b *Node) int
 
 type Node struct {
 	Path             string
@@ -201,7 +210,7 @@ type Node struct {
 	selectedChildIdx int
 }
 
-func (n *Node) ReadChildren() error {
+func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 	if !n.Info.IsDir() {
 		return nil
 	}
@@ -237,6 +246,7 @@ func (n *Node) ReadChildren() error {
 		}
 		chNodes = append(chNodes, childToAdd)
 	}
+	slices.SortFunc(chNodes, sortFunc)
 	n.Children = chNodes
 
 	// updateing selected child index if it's out of bounds after update
@@ -258,4 +268,16 @@ func generateNewFileName(fname, targetDir string) (string, error) {
 		fname = "copy_" + fname
 	}
 	return fname, nil
+}
+
+func defaultNodeSorting(a, b *Node) int {
+	// dirs first
+	if a.Info.IsDir() != b.Info.IsDir() {
+		if a.Info.IsDir() {
+			return -1
+		} else {
+			return 1
+		}
+	}
+	return strings.Compare(strings.ToLower(a.Info.Name()), strings.ToLower(b.Info.Name()))
 }

@@ -201,7 +201,8 @@ func main() {
 		rootPath = "."
 	}
 
-	tree, err := InitTree(rootPath)
+	// TODO: sorting function as a flag?
+	tree, err := InitTree(rootPath, nil)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)

@@ -15,7 +15,9 @@ todo:
 - [x] Fix strange offset with empty dir
 - [~] Remove files (kinda done)
 - [~] Resolve filename conflicts (kinda done)
+- [x] Sorting
 - [ ] Better style
+- [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?
 - [ ] Handle fs updates?
 
