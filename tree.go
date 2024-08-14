@@ -210,6 +210,15 @@ type Node struct {
 	selectedChildIdx int
 }
 
+func (n *Node) SelectLast() {
+	// can I just check for len here?
+	if n.Children != nil && len(n.Children) > 0 {
+		n.selectedChildIdx = len(n.Children) - 1
+	}
+}
+func (n *Node) SelectFirst() {
+	n.selectedChildIdx = 0
+}
 func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 	if !n.Info.IsDir() {
 		return nil

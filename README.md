@@ -16,6 +16,7 @@ todo:
 - [~] Remove files (kinda done)
 - [~] Resolve filename conflicts (kinda done)
 - [x] Sorting
+- [x] "G" to go bottom and "gg" to go top
 - [ ] Better style
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?

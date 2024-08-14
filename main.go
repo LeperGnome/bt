@@ -18,10 +18,11 @@ const (
 	Move
 	Copy
 	Delete
+	Go
 )
 
 func (o Operation) Repr() string {
-	return []string{"", "moving", "copying", "confirm removing (y/n) of"}[o]
+	return []string{"", "moving", "copying", "confirm removing (y/n) of", ""}[o]
 }
 
 type model struct {
@@ -46,6 +47,19 @@ func (m model) ProcessKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.processKeyDelete(msg)
 	case Copy:
 		return m.processKeyCopy(msg)
+	case Go:
+		return m.processKeyGo(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyGo(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "g":
+		m.opBuf = Noop
+		m.tree.CurrentDir.SelectFirst()
+	default:
+		m.opBuf = Noop
+		return m.processKeyDefault(msg)
 	}
 	return m, nil
 }
@@ -117,6 +131,10 @@ func (m model) processKeyDefault(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "D":
 		m.tree.MarkSelectedChild()
 		m.opBuf = Delete
+	case "g":
+		m.opBuf = Go
+	case "G":
+		m.tree.CurrentDir.SelectLast()
 	case "enter":
 		err := m.tree.CollapseOrExpandSelected()
 		if err != nil {
@@ -176,22 +194,6 @@ func newModel(tree Tree, renderer Renderer) model {
 	}
 }
 
-var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
-
-func formatSize(s float64, base float64) string {
-	unitsLimit := len(sizes)
-	i := 0
-	for s >= base && i < unitsLimit {
-		s = s / base
-		i++
-	}
-	f := "%.0f %s"
-	if i > 1 {
-		f = "%.2f %s"
-	}
-	return fmt.Sprintf(f, s, sizes[i])
-}
-
 func main() {
 	paddingPtr := flag.Uint("pad", 5, "Edge padding for top and bottom")
 	inlinePtr := flag.Bool("i", false, "In-place render (without alternate screen)")
@@ -220,4 +222,20 @@ func main() {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)
 	}
+}
+
+var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
+
+func formatSize(s float64, base float64) string {
+	unitsLimit := len(sizes)
+	i := 0
+	for s >= base && i < unitsLimit {
+		s = s / base
+		i++
+	}
+	f := "%.0f %s"
+	if i > 1 {
+		f = "%.2f %s"
+	}
+	return fmt.Sprintf(f, s, sizes[i])
 }
