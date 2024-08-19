@@ -17,7 +17,10 @@ todo:
 - [~] Resolve filename conflicts (kinda done)
 - [x] Sorting
 - [x] "G" to go bottom and "gg" to go top
+- [ ] Creating files and directories
+- [ ] Renaming files and directories
 - [ ] Better style
+
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?
 - [ ] Handle fs updates?
