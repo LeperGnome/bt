@@ -13,11 +13,11 @@ todo:
 - [x] Copy / paste files
 - [x] Not reading whole file contents, only fix size
 - [x] Fix strange offset with empty dir
-- [~] Remove files (kinda done)
+- [x] Remove files
 - [~] Resolve filename conflicts (kinda done)
 - [x] Sorting
 - [x] "G" to go bottom and "gg" to go top
-- [ ] Creating files and directories
+- [x] Creating files and directories
 - [ ] Renaming files and directories
 - [ ] Better style
 

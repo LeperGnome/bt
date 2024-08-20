@@ -24,6 +24,20 @@ func (t *Tree) GetSelectedChild() *Node {
 	}
 	return nil
 }
+func (t *Tree) CreateFileInCurrent(name string) error {
+	_, err := os.Create(filepath.Join(t.CurrentDir.Path, name))
+	if err != nil {
+		return err
+	}
+	return t.CurrentDir.readChildren(t.sortingFunc)
+}
+func (t *Tree) CreateDirectoryInCurrent(name string) error {
+	err := os.Mkdir(filepath.Join(t.CurrentDir.Path, name), os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return t.CurrentDir.readChildren(t.sortingFunc)
+}
 func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
 	selectedNode := t.GetSelectedChild()
 	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {

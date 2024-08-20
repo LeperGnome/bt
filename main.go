@@ -19,10 +19,22 @@ const (
 	Copy
 	Delete
 	Go
+	Insert
+	InsertFile
+	InsertDir
 )
 
 func (o Operation) Repr() string {
-	return []string{"", "moving", "copying", "confirm removing (y/n) of", ""}[o]
+	return []string{
+		"",
+		"moving",
+		"copying",
+		"confirm removing (y/n) of",
+		"",
+		"create new (f)ile/(d)irectory",
+		"enter new file name:",
+		"enter new directory name:",
+	}[o]
 }
 
 type model struct {
@@ -32,6 +44,7 @@ type model struct {
 	windowWidth  int
 	statusRow    string
 	opBuf        Operation
+	inputBuf     []rune
 }
 
 func (m model) Init() tea.Cmd {
@@ -49,6 +62,68 @@ func (m model) ProcessKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.processKeyCopy(msg)
 	case Go:
 		return m.processKeyGo(msg)
+	case Insert:
+		return m.processKeyInsert(msg)
+	case InsertFile:
+		return m.processKeyInsertFile(msg)
+	case InsertDir:
+		return m.processKeyInsertDir(msg)
+	default:
+		return m.processKeyDefault(msg)
+	}
+}
+func (m model) processKeyInsert(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "f":
+		m.opBuf = InsertFile
+	case "d":
+		m.opBuf = InsertDir
+	default:
+		m.opBuf = Noop
+		return m.processKeyDefault(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyInsertFile(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		err := m.tree.CreateFileInCurrent(string(m.inputBuf))
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+		m.inputBuf = []rune{}
+	default:
+		return m.processKeyAnyInput(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyInsertDir(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		err := m.tree.CreateDirectoryInCurrent(string(m.inputBuf))
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+		m.inputBuf = []rune{}
+	default:
+		return m.processKeyAnyInput(msg)
+	}
+	return m, nil
+}
+func (m model) processKeyAnyInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// TODO: better input handling? cursor?
+	switch msg.String() {
+	case "ctrl+c", "esc":
+		m.opBuf = Noop
+		m.inputBuf = []rune{}
+	case "backspace":
+		if l := len(m.inputBuf); l > 0 {
+			m.inputBuf = m.inputBuf[:l-1]
+		}
+	default:
+		m.inputBuf = append(m.inputBuf, msg.Runes...)
 	}
 	return m, nil
 }
@@ -135,6 +210,8 @@ func (m model) processKeyDefault(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.opBuf = Go
 	case "G":
 		m.tree.CurrentDir.SelectLast()
+	case "i":
+		m.opBuf = Insert
 	case "enter":
 		err := m.tree.CollapseOrExpandSelected()
 		if err != nil {
@@ -173,6 +250,7 @@ func (m model) View() string {
 		markedPath = m.tree.Marked.Path
 	}
 
+	// should probably render this somewhere else...
 	header := []string{
 		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
@@ -180,7 +258,7 @@ func (m model) View() string {
 			changeTime,
 			size,
 		)),
-		fmt.Sprintf(": %s %s", m.opBuf.Repr(), markedPath),
+		fmt.Sprintf(": %s %s%s", m.opBuf.Repr(), markedPath, string(m.inputBuf)),
 	}
 	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
 
@@ -191,6 +269,7 @@ func newModel(tree Tree, renderer Renderer) model {
 	return model{
 		tree:     &tree,
 		renderer: &renderer,
+		inputBuf: []rune{},
 	}
 }
 
