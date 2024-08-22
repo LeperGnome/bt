@@ -118,6 +118,12 @@ func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
 		if node.Info.IsDir() {
 			name = color.BlueString(node.Info.Name())
 		}
+		if tree.Marked == node {
+			s := lipgloss.
+				NewStyle().
+				Background(lipgloss.Color("#3C3C3C"))
+			name = s.Render(name)
+		}
 		repr := strings.Repeat("  ", depth) + name
 		if utf8.RuneCountInString(repr) > widthLim-6 { // 6 = len([]rune{"... <-"})
 			repr = string([]rune(repr)[:widthLim-6]) + "..."

@@ -18,7 +18,7 @@ todo:
 - [x] Sorting
 - [x] "G" to go bottom and "gg" to go top
 - [x] Creating files and directories
-- [ ] Renaming files and directories
+- [x] Renaming files and directories
 - [ ] Better style
 
 - [ ] Sorting function as a flag?

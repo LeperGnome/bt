@@ -8,6 +8,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 )
 
@@ -22,6 +23,7 @@ const (
 	Insert
 	InsertFile
 	InsertDir
+	Rename
 )
 
 func (o Operation) Repr() string {
@@ -34,6 +36,7 @@ func (o Operation) Repr() string {
 		"create new (f)ile/(d)irectory",
 		"enter new file name:",
 		"enter new directory name:",
+		"renaming",
 	}[o]
 }
 
@@ -68,9 +71,25 @@ func (m model) ProcessKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.processKeyInsertFile(msg)
 	case InsertDir:
 		return m.processKeyInsertDir(msg)
+	case Rename:
+		return m.processKeyRename(msg)
 	default:
 		return m.processKeyDefault(msg)
 	}
+}
+func (m model) processKeyRename(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		err := m.tree.RenameMarked(string(m.inputBuf))
+		if err != nil {
+			panic(err) // TODO
+		}
+		m.opBuf = Noop
+		m.inputBuf = []rune{}
+	default:
+		return m.processKeyAnyInput(msg)
+	}
+	return m, nil
 }
 func (m model) processKeyInsert(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
@@ -198,20 +217,28 @@ func (m model) processKeyDefault(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "h", "left":
 		m.tree.SetParentAsCurrent()
 	case "y":
-		m.tree.MarkSelectedChild()
-		m.opBuf = Copy
+		if ok := m.tree.MarkSelectedChild(); ok {
+			m.opBuf = Copy
+		}
 	case "d":
-		m.tree.MarkSelectedChild()
-		m.opBuf = Move
+		if ok := m.tree.MarkSelectedChild(); ok {
+			m.opBuf = Move
+		}
 	case "D":
-		m.tree.MarkSelectedChild()
-		m.opBuf = Delete
+		if ok := m.tree.MarkSelectedChild(); ok {
+			m.opBuf = Delete
+		}
 	case "g":
 		m.opBuf = Go
 	case "G":
 		m.tree.CurrentDir.SelectLast()
 	case "i":
 		m.opBuf = Insert
+	case "r":
+		if ok := m.tree.MarkSelectedChild(); ok {
+			m.inputBuf = []rune(m.tree.Marked.Info.Name())
+			m.opBuf = Rename
+		}
 	case "enter":
 		err := m.tree.CollapseOrExpandSelected()
 		if err != nil {
@@ -250,6 +277,19 @@ func (m model) View() string {
 		markedPath = m.tree.Marked.Path
 	}
 
+	operationBar := fmt.Sprintf(": %s", m.opBuf.Repr())
+	if markedPath != "" {
+		operationBar += fmt.Sprintf(" [%s]", markedPath)
+	}
+
+	// TODO: kinda stupid...
+	if m.opBuf == InsertDir || m.opBuf == InsertFile || m.opBuf == Rename {
+		s := lipgloss.
+			NewStyle().
+			Background(lipgloss.Color("#3C3C3C"))
+		operationBar += fmt.Sprintf(" | %s |", s.Render(string(m.inputBuf)))
+	}
+
 	// should probably render this somewhere else...
 	header := []string{
 		color.GreenString("> " + path),
@@ -258,8 +298,9 @@ func (m model) View() string {
 			changeTime,
 			size,
 		)),
-		fmt.Sprintf(": %s %s%s", m.opBuf.Repr(), markedPath, string(m.inputBuf)),
+		operationBar,
 	}
+
 	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
 
 	return strings.Join(header, "\n") + "\n" + renderedTree

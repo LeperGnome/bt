@@ -24,6 +24,21 @@ func (t *Tree) GetSelectedChild() *Node {
 	}
 	return nil
 }
+func (t *Tree) RenameMarked(name string) error {
+	if t.Marked == nil {
+		return nil
+	}
+	err := os.Rename(t.Marked.Path, filepath.Join(t.Marked.Parent.Path, name))
+	if err != nil {
+		return err
+	}
+	err = t.Marked.Parent.readChildren(t.sortingFunc)
+	if err != nil {
+		return err
+	}
+	t.Marked = nil
+	return nil
+}
 func (t *Tree) CreateFileInCurrent(name string) error {
 	_, err := os.Create(filepath.Join(t.CurrentDir.Path, name))
 	if err != nil {
@@ -92,10 +107,12 @@ func (t *Tree) SetParentAsCurrent() {
 		t.CurrentDir = t.CurrentDir.Parent
 	}
 }
-func (t *Tree) MarkSelectedChild() {
+func (t *Tree) MarkSelectedChild() bool {
 	if selected := t.GetSelectedChild(); selected != nil {
 		t.Marked = selected
+		return true
 	}
+	return false
 }
 func (t *Tree) DropMark() {
 	t.Marked = nil
