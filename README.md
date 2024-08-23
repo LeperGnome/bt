@@ -4,13 +4,23 @@ Navigate file tree in terminal.
 
 ![Usage screenshot](assets/bt-usage.png)
 
-## Usage
+## Installation
 
-Currently the only way to install is only by building from source...
+Currently the only way to install is by building from source...
 
-```
+```bash
 go build .
 mv ./bt ~/.local/bin/bt
+```
+
+## Usage
+
+```bash
+> bt -h
+Usage of bt:
+  -i    In-place render (without alternate screen)
+  -pad uint
+        Edge padding for top and bottom (default 5)
 ```
 
 Commands:
