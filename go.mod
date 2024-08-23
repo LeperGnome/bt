@@ -1,4 +1,4 @@
-module github.com/LeperGnome/tr
+module github.com/LeperGnome/bt
 
 go 1.22.2
 

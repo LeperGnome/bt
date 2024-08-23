@@ -1,6 +1,33 @@
-# Interactive tree
+# Better tree (arguably)
 
 Navigate file tree in terminal.
+
+## Usage
+
+Currently the only way to install is only by building from source...
+
+```
+go build .
+mv ./bt ~/.local/bin/bt
+```
+
+Commands:
+
+| key           | desc                                                   |
+|---------------|--------------------------------------------------------|
+| j / arr down  | Select next child                                      |
+| k / arr up    | Select previous child                                  |
+| h / arr left  | Move up a dir                                          |
+| l / arr right | Enter selected directory                               |
+| gg            | Go to top most child in current directory              |
+| G             | Go to last child in current directory                  |
+| d             | Move selected child (then 'p' to paste)                |
+| y             | Copy selected child (then 'p' to paste)                |
+| D             | Delete selected child                                  |
+| if / id       | Create file (if) / directory (id) in current directory |
+| r             | Rename selected child                                  |
+
+---
 
 ```
 todo:
