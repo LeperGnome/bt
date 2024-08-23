@@ -114,7 +114,17 @@ func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
 		if node == nil {
 			continue
 		}
+
 		name := node.Info.Name()
+		nameRuneCountNoStyle := utf8.RuneCountInString(name)
+		indent := strings.Repeat("  ", depth)
+		indentRuneCount := utf8.RuneCountInString(indent)
+
+		// TODO: probably bug here
+		if nameRuneCountNoStyle+indentRuneCount > widthLim-6 { // 6 = len([]rune{"... <-"})
+			name = string([]rune(name)[:max(0, widthLim-indentRuneCount-6)]) + "..."
+		}
+
 		if node.Info.IsDir() {
 			name = color.BlueString(node.Info.Name())
 		}
@@ -124,10 +134,8 @@ func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
 				Background(lipgloss.Color("#3C3C3C"))
 			name = s.Render(name)
 		}
-		repr := strings.Repeat("  ", depth) + name
-		if utf8.RuneCountInString(repr) > widthLim-6 { // 6 = len([]rune{"... <-"})
-			repr = string([]rune(repr)[:widthLim-6]) + "..."
-		}
+
+		repr := indent + name
 
 		if tree.GetSelectedChild() == node {
 			repr += color.YellowString(" <-")

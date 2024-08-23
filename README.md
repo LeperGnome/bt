@@ -2,6 +2,8 @@
 
 Navigate file tree in terminal.
 
+![Usage screenshot](assets/bt-usage.png)
+
 ## Usage
 
 Currently the only way to install is only by building from source...

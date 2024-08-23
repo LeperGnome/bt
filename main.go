@@ -137,6 +137,7 @@ func (m model) processKeyAnyInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "ctrl+c", "esc":
 		m.opBuf = Noop
 		m.inputBuf = []rune{}
+		m.tree.DropMark()
 	case "backspace":
 		if l := len(m.inputBuf); l > 0 {
 			m.inputBuf = m.inputBuf[:l-1]
