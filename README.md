@@ -23,7 +23,7 @@ Usage of bt:
         Edge padding for top and bottom (default 5)
 ```
 
-Commands:
+Key bindings:
 
 | key           | desc                                                   |
 |---------------|--------------------------------------------------------|
