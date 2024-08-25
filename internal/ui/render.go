@@ -1,13 +1,16 @@
 package ui
 
 import (
+	"fmt"
 	"math"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 
+	"github.com/LeperGnome/bt/internal/state"
 	t "github.com/LeperGnome/bt/internal/tree"
 )
 
@@ -22,7 +25,57 @@ type Renderer struct {
 	offsetMem   int
 }
 
-func (r *Renderer) RenderTree(tree *t.Tree, winHeight, winWidth int) string {
+func (r *Renderer) Render(s state.State, winHeight, winWidth int) string {
+	renderedHeading, headLen := r.renderHeading(s)
+	renderedTree := r.renderTreeWithContent(s.Tree, winHeight-headLen, winWidth)
+
+	return renderedHeading + "\n" + renderedTree
+}
+
+func (r *Renderer) renderHeading(s state.State) (string, int) {
+	selected := s.Tree.GetSelectedChild()
+
+	// NOTE: special case for empty dir
+	path := s.Tree.CurrentDir.Path + "/..."
+	changeTime := "--"
+	size := "0 B"
+
+	if selected != nil {
+		path = selected.Path
+		changeTime = selected.Info.ModTime().Format(time.RFC822)
+		size = formatSize(float64(selected.Info.Size()), 1024.0)
+	}
+
+	markedPath := ""
+	if s.Tree.Marked != nil {
+		markedPath = s.Tree.Marked.Path
+	}
+
+	operationBar := fmt.Sprintf(": %s", s.OpBuf.Repr())
+	if markedPath != "" {
+		operationBar += fmt.Sprintf(" [%s]", markedPath)
+	}
+
+	if s.OpBuf.IsInput() {
+		style := lipgloss.
+			NewStyle().
+			Background(lipgloss.Color("#3C3C3C"))
+		operationBar += fmt.Sprintf(" | %s |", style.Render(string(s.InputBuf)))
+	}
+
+	header := []string{
+		color.GreenString("> " + path),
+		color.MagentaString(fmt.Sprintf(
+			"%v : %s",
+			changeTime,
+			size,
+		)),
+		operationBar,
+	}
+	return strings.Join(header, "\n"), len(header)
+}
+
+func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) string {
 	if winWidth < minWidth || winHeight < minHeight {
 		return "too small =(\n"
 	}
@@ -160,24 +213,18 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 	return lines, currentLine
 }
 
-type stack[T any] struct {
-	items []T
-}
+var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
 
-func (s *stack[T]) Push(el ...T) {
-	s.items = append(s.items, el...)
-}
-func (s *stack[_]) Len() int {
-	return len(s.items)
-}
-func (s *stack[T]) Pop() T {
-	el := s.items[len(s.items)-1]
-	s.items = s.items[:len(s.items)-1]
-	return el
-}
-
-func newStack[T any](els ...T) stack[T] {
-	s := stack[T]{}
-	s.Push(els...)
-	return s
+func formatSize(s float64, base float64) string {
+	unitsLimit := len(sizes)
+	i := 0
+	for s >= base && i < unitsLimit {
+		s = s / base
+		i++
+	}
+	f := "%.0f %s"
+	if i > 1 {
+		f = "%.2f %s"
+	}
+	return fmt.Sprintf(f, s, sizes[i])
 }

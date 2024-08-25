@@ -4,12 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/fatih/color"
 
 	"github.com/LeperGnome/bt/internal/state"
 	t "github.com/LeperGnome/bt/internal/tree"
@@ -38,50 +34,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 func (m model) View() string {
-	selected := m.appState.Tree.GetSelectedChild()
-
-	// NOTE: special case for empty dir
-	path := m.appState.Tree.CurrentDir.Path + "/..."
-	changeTime := "--"
-	size := "0 B"
-
-	if selected != nil {
-		path = selected.Path
-		changeTime = selected.Info.ModTime().Format(time.RFC822)
-		size = formatSize(float64(selected.Info.Size()), 1024.0)
-	}
-
-	markedPath := ""
-	if m.appState.Tree.Marked != nil {
-		markedPath = m.appState.Tree.Marked.Path
-	}
-
-	operationBar := fmt.Sprintf(": %s", m.appState.OpBuf.Repr())
-	if markedPath != "" {
-		operationBar += fmt.Sprintf(" [%s]", markedPath)
-	}
-
-	if m.appState.OpBuf.IsInput() {
-		s := lipgloss.
-			NewStyle().
-			Background(lipgloss.Color("#3C3C3C"))
-		operationBar += fmt.Sprintf(" | %s |", s.Render(string(m.appState.InputBuf)))
-	}
-
-	// should probably render this somewhere else...
-	header := []string{
-		color.GreenString("> " + path),
-		color.MagentaString(fmt.Sprintf(
-			"%v : %s",
-			changeTime,
-			size,
-		)),
-		operationBar,
-	}
-
-	renderedTree := m.renderer.RenderTree(m.appState.Tree, m.windowHeight-len(header), m.windowWidth)
-
-	return strings.Join(header, "\n") + "\n" + renderedTree
+	return m.renderer.Render(m.appState, m.windowHeight, m.windowWidth)
 }
 
 func newModel(tree t.Tree, renderer ui.Renderer) model {
@@ -120,20 +73,4 @@ func main() {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)
 	}
-}
-
-var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
-
-func formatSize(s float64, base float64) string {
-	unitsLimit := len(sizes)
-	i := 0
-	for s >= base && i < unitsLimit {
-		s = s / base
-		i++
-	}
-	f := "%.0f %s"
-	if i > 1 {
-		f = "%.2f %s"
-	}
-	return fmt.Sprintf(f, s, sizes[i])
 }
