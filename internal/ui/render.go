@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"math"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
+
+	t "github.com/LeperGnome/bt/internal/tree"
 )
 
 const (
@@ -20,7 +22,7 @@ type Renderer struct {
 	offsetMem   int
 }
 
-func (r *Renderer) Render(tree *Tree, winHeight, winWidth int) string {
+func (r *Renderer) Render(tree *t.Tree, winHeight, winWidth int) string {
 	if winWidth < minWidth || winHeight < minHeight {
 		return "too small =(\n"
 	}
@@ -93,12 +95,12 @@ func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) [
 }
 
 // Returns lines as slice and index of selected line.
-func (r *Renderer) renderTree(tree *Tree, widthLim int) ([]string, int) {
+func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 	linen := -1
 	currentLine := 0
 
 	type stackEl struct {
-		*Node
+		*t.Node
 		int
 	}
 	lines := []string{}

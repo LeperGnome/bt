@@ -10,6 +10,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
+
+	t "github.com/LeperGnome/bt/internal/tree"
+	ui "github.com/LeperGnome/bt/internal/ui"
 )
 
 type Operation int
@@ -41,8 +44,8 @@ func (o Operation) Repr() string {
 }
 
 type model struct {
-	tree         *Tree
-	renderer     *Renderer
+	tree         *t.Tree
+	renderer     *ui.Renderer
 	windowHeight int
 	windowWidth  int
 	statusRow    string
@@ -307,7 +310,7 @@ func (m model) View() string {
 	return strings.Join(header, "\n") + "\n" + renderedTree
 }
 
-func newModel(tree Tree, renderer Renderer) model {
+func newModel(tree t.Tree, renderer ui.Renderer) model {
 	return model{
 		tree:     &tree,
 		renderer: &renderer,
@@ -325,12 +328,12 @@ func main() {
 	}
 
 	// TODO: sorting function as a flag?
-	tree, err := InitTree(rootPath, nil)
+	tree, err := t.InitTree(rootPath, nil)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-	renderer := Renderer{EdgePadding: int(*paddingPtr)}
+	renderer := ui.Renderer{EdgePadding: int(*paddingPtr)}
 	m := newModel(tree, renderer)
 
 	opts := []tea.ProgramOption{}
