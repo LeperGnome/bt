@@ -9,3 +9,5 @@ run:
 
 debug: build run
 
+install: build
+	cp ./bin/bt ~/.local/bin/bt

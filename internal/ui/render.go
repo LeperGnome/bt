@@ -22,7 +22,7 @@ type Renderer struct {
 	offsetMem   int
 }
 
-func (r *Renderer) Render(tree *t.Tree, winHeight, winWidth int) string {
+func (r *Renderer) RenderTree(tree *t.Tree, winHeight, winWidth int) string {
 	if winWidth < minWidth || winHeight < minHeight {
 		return "too small =(\n"
 	}

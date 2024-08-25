@@ -11,245 +11,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 
+	"github.com/LeperGnome/bt/internal/state"
 	t "github.com/LeperGnome/bt/internal/tree"
 	ui "github.com/LeperGnome/bt/internal/ui"
 )
 
-type Operation int
-
-const (
-	Noop Operation = iota
-	Move
-	Copy
-	Delete
-	Go
-	Insert
-	InsertFile
-	InsertDir
-	Rename
-)
-
-func (o Operation) Repr() string {
-	return []string{
-		"",
-		"moving",
-		"copying",
-		"confirm removing (y/n) of",
-		"",
-		"create new (f)ile/(d)irectory",
-		"enter new file name:",
-		"enter new directory name:",
-		"renaming",
-	}[o]
-}
-
 type model struct {
-	tree         *t.Tree
-	renderer     *ui.Renderer
 	windowHeight int
 	windowWidth  int
-	statusRow    string
-	opBuf        Operation
-	inputBuf     []rune
+	appState     state.State
+	renderer     *ui.Renderer
 }
 
 func (m model) Init() tea.Cmd {
 	return nil
-}
-func (m model) ProcessKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.opBuf {
-	case Noop:
-		return m.processKeyDefault(msg)
-	case Move:
-		return m.processKeyMove(msg)
-	case Delete:
-		return m.processKeyDelete(msg)
-	case Copy:
-		return m.processKeyCopy(msg)
-	case Go:
-		return m.processKeyGo(msg)
-	case Insert:
-		return m.processKeyInsert(msg)
-	case InsertFile:
-		return m.processKeyInsertFile(msg)
-	case InsertDir:
-		return m.processKeyInsertDir(msg)
-	case Rename:
-		return m.processKeyRename(msg)
-	default:
-		return m.processKeyDefault(msg)
-	}
-}
-func (m model) processKeyRename(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "enter":
-		err := m.tree.RenameMarked(string(m.inputBuf))
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-		m.inputBuf = []rune{}
-	default:
-		return m.processKeyAnyInput(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyInsert(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "f":
-		m.opBuf = InsertFile
-	case "d":
-		m.opBuf = InsertDir
-	default:
-		m.opBuf = Noop
-		return m.processKeyDefault(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyInsertFile(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "enter":
-		err := m.tree.CreateFileInCurrent(string(m.inputBuf))
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-		m.inputBuf = []rune{}
-	default:
-		return m.processKeyAnyInput(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyInsertDir(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "enter":
-		err := m.tree.CreateDirectoryInCurrent(string(m.inputBuf))
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-		m.inputBuf = []rune{}
-	default:
-		return m.processKeyAnyInput(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyAnyInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// TODO: better input handling? cursor?
-	switch msg.String() {
-	case "ctrl+c", "esc":
-		m.opBuf = Noop
-		m.inputBuf = []rune{}
-		m.tree.DropMark()
-	case "backspace":
-		if l := len(m.inputBuf); l > 0 {
-			m.inputBuf = m.inputBuf[:l-1]
-		}
-	default:
-		m.inputBuf = append(m.inputBuf, msg.Runes...)
-	}
-	return m, nil
-}
-func (m model) processKeyGo(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "g":
-		m.opBuf = Noop
-		m.tree.CurrentDir.SelectFirst()
-	default:
-		m.opBuf = Noop
-		return m.processKeyDefault(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyDelete(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "y":
-		err := m.tree.DeleteMarked()
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-	default:
-		m.opBuf = Noop
-		m.tree.DropMark()
-		return m.processKeyDefault(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyMove(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "p":
-		err := m.tree.MoveMarkedToCurrentDir()
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-	default:
-		return m.processKeyDefault(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyCopy(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "p":
-		err := m.tree.CopyMarkedToCurrentDir()
-		if err != nil {
-			panic(err) // TODO
-		}
-		m.opBuf = Noop
-	default:
-		return m.processKeyDefault(msg)
-	}
-	return m, nil
-}
-func (m model) processKeyDefault(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		m.tree.DropMark()
-		m.opBuf = Noop
-	case "ctrl+c", "q":
-		return m, tea.Quit
-	case "j", "down":
-		m.tree.SelectNextChild()
-	case "k", "up":
-		m.tree.SelectPreviousChild()
-	case "l", "right":
-		err := m.tree.SetSelectedChildAsCurrent()
-		if err != nil {
-			panic(err) // TODO
-		}
-	case "h", "left":
-		m.tree.SetParentAsCurrent()
-	case "y":
-		if ok := m.tree.MarkSelectedChild(); ok {
-			m.opBuf = Copy
-		}
-	case "d":
-		if ok := m.tree.MarkSelectedChild(); ok {
-			m.opBuf = Move
-		}
-	case "D":
-		if ok := m.tree.MarkSelectedChild(); ok {
-			m.opBuf = Delete
-		}
-	case "g":
-		m.opBuf = Go
-	case "G":
-		m.tree.CurrentDir.SelectLast()
-	case "i":
-		m.opBuf = Insert
-	case "r":
-		if ok := m.tree.MarkSelectedChild(); ok {
-			m.inputBuf = []rune(m.tree.Marked.Info.Name())
-			m.opBuf = Rename
-		}
-	case "enter":
-		err := m.tree.CollapseOrExpandSelected()
-		if err != nil {
-			panic(err) // TODO
-		}
-	}
-	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -258,15 +33,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowHeight = msg.Height
 		m.windowWidth = msg.Width
 	case tea.KeyMsg:
-		return m.ProcessKey(msg)
+		return m, m.appState.ProcessKey(msg)
 	}
 	return m, nil
 }
 func (m model) View() string {
-	selected := m.tree.GetSelectedChild()
+	selected := m.appState.Tree.GetSelectedChild()
 
 	// NOTE: special case for empty dir
-	path := m.tree.CurrentDir.Path + "/..."
+	path := m.appState.Tree.CurrentDir.Path + "/..."
 	changeTime := "--"
 	size := "0 B"
 
@@ -277,21 +52,20 @@ func (m model) View() string {
 	}
 
 	markedPath := ""
-	if m.tree.Marked != nil {
-		markedPath = m.tree.Marked.Path
+	if m.appState.Tree.Marked != nil {
+		markedPath = m.appState.Tree.Marked.Path
 	}
 
-	operationBar := fmt.Sprintf(": %s", m.opBuf.Repr())
+	operationBar := fmt.Sprintf(": %s", m.appState.OpBuf.Repr())
 	if markedPath != "" {
 		operationBar += fmt.Sprintf(" [%s]", markedPath)
 	}
 
-	// TODO: kinda stupid...
-	if m.opBuf == InsertDir || m.opBuf == InsertFile || m.opBuf == Rename {
+	if m.appState.OpBuf.IsInput() {
 		s := lipgloss.
 			NewStyle().
 			Background(lipgloss.Color("#3C3C3C"))
-		operationBar += fmt.Sprintf(" | %s |", s.Render(string(m.inputBuf)))
+		operationBar += fmt.Sprintf(" | %s |", s.Render(string(m.appState.InputBuf)))
 	}
 
 	// should probably render this somewhere else...
@@ -305,16 +79,16 @@ func (m model) View() string {
 		operationBar,
 	}
 
-	renderedTree := m.renderer.Render(m.tree, m.windowHeight-len(header), m.windowWidth)
+	renderedTree := m.renderer.RenderTree(m.appState.Tree, m.windowHeight-len(header), m.windowWidth)
 
 	return strings.Join(header, "\n") + "\n" + renderedTree
 }
 
 func newModel(tree t.Tree, renderer ui.Renderer) model {
+	s := state.NewState(&tree)
 	return model{
-		tree:     &tree,
+		appState: s,
 		renderer: &renderer,
-		inputBuf: []rune{},
 	}
 }
 
