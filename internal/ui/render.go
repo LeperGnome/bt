@@ -25,14 +25,14 @@ type Renderer struct {
 	offsetMem   int
 }
 
-func (r *Renderer) Render(s state.State, winHeight, winWidth int) string {
+func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
 	renderedHeading, headLen := r.renderHeading(s)
 	renderedTree := r.renderTreeWithContent(s.Tree, winHeight-headLen, winWidth)
 
 	return renderedHeading + "\n" + renderedTree
 }
 
-func (r *Renderer) renderHeading(s state.State) (string, int) {
+func (r *Renderer) renderHeading(s *state.State) (string, int) {
 	selected := s.Tree.GetSelectedChild()
 
 	// NOTE: special case for empty dir
@@ -105,10 +105,10 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 	contentStyle := lipgloss.
 		NewStyle().
 		Italic(true).
-		MarginLeft(leftMargin).
-		MaxWidth(sectionWidth + leftMargin - 1).
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderLeft(true)
+		BorderLeft(true).
+		MarginLeft(leftMargin).
+		MaxWidth(sectionWidth + leftMargin - 1)
 
 	var contentLines []string
 	if !utf8.Valid(content) {

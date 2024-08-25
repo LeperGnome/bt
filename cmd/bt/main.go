@@ -8,14 +8,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/LeperGnome/bt/internal/state"
-	t "github.com/LeperGnome/bt/internal/tree"
 	ui "github.com/LeperGnome/bt/internal/ui"
 )
 
 type model struct {
 	windowHeight int
 	windowWidth  int
-	appState     state.State
+	appState     *state.State
 	renderer     *ui.Renderer
 }
 
@@ -37,12 +36,16 @@ func (m model) View() string {
 	return m.renderer.Render(m.appState, m.windowHeight, m.windowWidth)
 }
 
-func newModel(tree t.Tree, renderer ui.Renderer) model {
-	s := state.NewState(&tree)
+func newModel(root string, pad int) (model, error) {
+	s, err := state.InitState(root)
+	if err != nil {
+		return model{}, err
+	}
+	renderer := &ui.Renderer{EdgePadding: pad}
 	return model{
 		appState: s,
-		renderer: &renderer,
-	}
+		renderer: renderer,
+	}, nil
 }
 
 func main() {
@@ -54,14 +57,11 @@ func main() {
 		rootPath = "."
 	}
 
-	// TODO: sorting function as a flag?
-	tree, err := t.InitTree(rootPath, nil)
+	m, err := newModel(rootPath, int(*paddingPtr))
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error on init: %v", err)
 		os.Exit(1)
 	}
-	renderer := ui.Renderer{EdgePadding: int(*paddingPtr)}
-	m := newModel(tree, renderer)
 
 	opts := []tea.ProgramOption{}
 	if !*inlinePtr {

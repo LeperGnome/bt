@@ -47,15 +47,20 @@ type State struct {
 	InputBuf []rune
 }
 
-func NewState(tree *t.Tree) State {
-	return State{
-		Tree:     tree,
+func InitState(root string) (*State, error) {
+	tree, err := t.InitTree(root, nil)
+	if err != nil {
+		return nil, err
+	}
+	// TODO init watcher
+	return &State{
+		Tree:     &tree,
 		OpBuf:    Noop,
 		InputBuf: []rune{},
-	}
+	}, nil
 }
 
-func (s State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
+func (s *State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
 	switch s.OpBuf {
 	case Noop:
 		return s.processKeyDefault(msg)
@@ -79,7 +84,7 @@ func (s State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
 		return s.processKeyDefault(msg)
 	}
 }
-func (s State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "enter":
 		err := s.Tree.RenameMarked(string(s.InputBuf))
@@ -93,7 +98,7 @@ func (s State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyInsert(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyInsert(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "f":
 		s.OpBuf = InsertFile
@@ -105,7 +110,7 @@ func (s State) processKeyInsert(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyInsertFile(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyInsertFile(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "enter":
 		err := s.Tree.CreateFileInCurrent(string(s.InputBuf))
@@ -119,7 +124,7 @@ func (s State) processKeyInsertFile(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyInsertDir(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyInsertDir(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "enter":
 		err := s.Tree.CreateDirectoryInCurrent(string(s.InputBuf))
@@ -133,7 +138,7 @@ func (s State) processKeyInsertDir(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyAnyInput(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyAnyInput(msg tea.KeyMsg) tea.Cmd {
 	// TODO: better input handling? cursor?
 	switch msg.String() {
 	case "ctrl+c", "esc":
@@ -149,7 +154,7 @@ func (s State) processKeyAnyInput(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyGo(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyGo(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "g":
 		s.OpBuf = Noop
@@ -160,7 +165,7 @@ func (s State) processKeyGo(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyDelete(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyDelete(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "y":
 		err := s.Tree.DeleteMarked()
@@ -175,7 +180,7 @@ func (s State) processKeyDelete(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyMove(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyMove(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "p":
 		err := s.Tree.MoveMarkedToCurrentDir()
@@ -188,7 +193,7 @@ func (s State) processKeyMove(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyCopy(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyCopy(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "p":
 		err := s.Tree.CopyMarkedToCurrentDir()
@@ -201,7 +206,7 @@ func (s State) processKeyCopy(msg tea.KeyMsg) tea.Cmd {
 	}
 	return nil
 }
-func (s State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
+func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "esc":
 		s.Tree.DropMark()
