@@ -3,6 +3,7 @@ package state
 import (
 	t "github.com/LeperGnome/bt/internal/tree"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fsnotify/fsnotify"
 )
 
 type Operation int
@@ -45,18 +46,25 @@ type State struct {
 	Tree     *t.Tree
 	OpBuf    Operation
 	InputBuf []rune
+	watcher  *fsnotify.Watcher
 }
 
-func InitState(root string) (*State, error) {
+func InitState(root string) (*State, <-chan NodeChange, error) {
 	tree, err := t.InitTree(root, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, nil, err
+	}
+	eventsChan := runFakeFSWatcher(watcher)
 	return &State{
 		Tree:     &tree,
 		OpBuf:    Noop,
 		InputBuf: []rune{},
-	}, nil
+		watcher:  watcher,
+	}, eventsChan, nil
 }
 
 func (s *State) ProcessNodeChange(NodeChange) tea.Cmd {

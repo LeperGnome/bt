@@ -41,7 +41,7 @@ func (m model) View() string {
 }
 
 func newModel(root string, pad int) (model, error) {
-	s, err := state.InitState(root)
+	s, ch, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
@@ -49,7 +49,7 @@ func newModel(root string, pad int) (model, error) {
 	return model{
 		appState:   s,
 		renderer:   renderer,
-		eventsChan: state.InitFakeFSWatcher(),
+		eventsChan: ch,
 	}, nil
 }
 
