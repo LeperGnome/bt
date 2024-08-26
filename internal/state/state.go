@@ -52,12 +52,16 @@ func InitState(root string) (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO init watcher
 	return &State{
 		Tree:     &tree,
 		OpBuf:    Noop,
 		InputBuf: []rune{},
 	}, nil
+}
+
+func (s *State) ProcessNodeChange(NodeChange) tea.Cmd {
+	s.Tree.SelectNextChild() // TODO
+	return nil
 }
 
 func (s *State) ProcessKey(msg tea.KeyMsg) tea.Cmd {

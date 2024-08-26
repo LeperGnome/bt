@@ -16,10 +16,11 @@ type model struct {
 	windowWidth  int
 	appState     *state.State
 	renderer     *ui.Renderer
+	eventsChan   <-chan state.NodeChange
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return listenFSEvents(m.eventsChan)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -29,6 +30,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 	case tea.KeyMsg:
 		return m, m.appState.ProcessKey(msg)
+	case state.NodeChange:
+		m.appState.ProcessNodeChange(msg)
+		return m, listenFSEvents(m.eventsChan)
 	}
 	return m, nil
 }
@@ -43,9 +47,16 @@ func newModel(root string, pad int) (model, error) {
 	}
 	renderer := &ui.Renderer{EdgePadding: pad}
 	return model{
-		appState: s,
-		renderer: renderer,
+		appState:   s,
+		renderer:   renderer,
+		eventsChan: state.InitFakeFSWatcher(),
 	}, nil
+}
+
+func listenFSEvents(eventsChan <-chan state.NodeChange) tea.Cmd {
+	return func() tea.Msg {
+		return <-eventsChan
+	}
 }
 
 func main() {
