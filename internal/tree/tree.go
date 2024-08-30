@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 type Tree struct {
@@ -22,6 +23,24 @@ func (t *Tree) GetSelectedChild() *Node {
 		return t.CurrentDir.Children[t.CurrentDir.selectedChildIdx]
 	}
 	return nil
+}
+func (t *Tree) RefreshNodeByPath(path string) error {
+	// I'm assuming, that all paths are relative to my tree root
+	parentDir := filepath.Dir(path)
+	cur := t.Root
+outer:
+	for {
+		if parentDir == cur.Path {
+			return cur.readChildren(t.sortingFunc)
+		}
+		for _, ch := range cur.Children {
+			if strings.HasPrefix(path, ch.Path) {
+				cur = ch
+				continue outer
+			}
+		}
+		return nil
+	}
 }
 func (t *Tree) RenameMarked(name string) error {
 	if t.Marked == nil {

@@ -58,12 +58,15 @@ todo:
 - [x] "G" to go bottom and "gg" to go top
 - [x] Creating files and directories
 - [x] Renaming files and directories
+- [~] Handle fs updates (kinda)
+    - [ ] Unsubscribe from directories when leaving
+    - [ ] Subscribe on 'enter'
+    - [ ] Don't manually read children
 - [ ] Better style
 
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?
-- [ ] Handle fs updates?
 
-- [ ] Project structure
+- [~] Project structure (kinda)
 - [ ] Tests
 ```

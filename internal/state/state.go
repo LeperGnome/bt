@@ -58,7 +58,11 @@ func InitState(root string) (*State, <-chan NodeChange, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	eventsChan := runFakeFSWatcher(watcher)
+	eventsChan := runFSWatcher(watcher)
+	err = watcher.Add(tree.Root.Path)
+	if err != nil {
+		return nil, nil, err
+	}
 	return &State{
 		Tree:     &tree,
 		OpBuf:    Noop,
@@ -67,8 +71,11 @@ func InitState(root string) (*State, <-chan NodeChange, error) {
 	}, eventsChan, nil
 }
 
-func (s *State) ProcessNodeChange(NodeChange) tea.Cmd {
-	s.Tree.SelectNextChild() // TODO
+func (s *State) ProcessNodeChange(nodeChange NodeChange) tea.Cmd {
+	err := s.Tree.RefreshNodeByPath(nodeChange.Path)
+	if err != nil {
+		panic(err) // TODO
+	}
 	return nil
 }
 
@@ -230,6 +237,10 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "k", "up":
 		s.Tree.SelectPreviousChild()
 	case "l", "right":
+		selected := s.Tree.GetSelectedChild()
+		if selected != nil {
+			s.watcher.Add(selected.Path)
+		}
 		err := s.Tree.SetSelectedChildAsCurrent()
 		if err != nil {
 			panic(err) // TODO

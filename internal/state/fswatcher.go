@@ -4,9 +4,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-type NodeChange struct{} // TODO
+type NodeChange struct {
+	Path string
+}
 
-func runFSWatcher(watcher *fsnotify.Watcher) <-chan NodeChange { // TODO
+func runFSWatcher(watcher *fsnotify.Watcher) <-chan NodeChange {
 	ch := make(chan NodeChange)
 	go func() {
 		defer watcher.Close()
@@ -16,8 +18,8 @@ func runFSWatcher(watcher *fsnotify.Watcher) <-chan NodeChange { // TODO
 				if !ok {
 					return
 				}
-				if event.Has(fsnotify.Remove) {
-					// TODO
+				if event.Has(fsnotify.Remove) || event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
+					ch <- NodeChange{Path: event.Name}
 				}
 			case _, ok := <-watcher.Errors:
 				if !ok {

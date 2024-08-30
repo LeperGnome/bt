@@ -12,6 +12,7 @@ import (
 
 	"github.com/LeperGnome/bt/internal/state"
 	t "github.com/LeperGnome/bt/internal/tree"
+	"github.com/LeperGnome/bt/pkg/stack"
 )
 
 const (
@@ -157,7 +158,7 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		int
 	}
 	lines := []string{}
-	s := newStack(stackEl{tree.Root, 0})
+	s := stack.NewStack(stackEl{tree.Root, 0})
 
 	for s.Len() > 0 {
 		el := s.Pop()
