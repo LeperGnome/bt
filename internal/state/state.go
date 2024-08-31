@@ -26,7 +26,7 @@ func (o Operation) Repr() string {
 		"moving",
 		"copying",
 		"confirm removing (y/n) of",
-		"",
+		"g",
 		"create new (f)ile/(d)irectory",
 		"enter new file name:",
 		"enter new directory name:",
@@ -264,6 +264,7 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "G":
 		s.Tree.CurrentDir.SelectLast()
 	case "i":
+		s.Tree.DropMark()
 		s.OpBuf = Insert
 	case "r":
 		if ok := s.Tree.MarkSelectedChild(); ok {

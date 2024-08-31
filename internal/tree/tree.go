@@ -50,26 +50,15 @@ func (t *Tree) RenameMarked(name string) error {
 	if err != nil {
 		return err
 	}
-	err = t.Marked.Parent.readChildren(t.sortingFunc)
-	if err != nil {
-		return err
-	}
 	t.Marked = nil
 	return nil
 }
 func (t *Tree) CreateFileInCurrent(name string) error {
 	_, err := os.Create(filepath.Join(t.CurrentDir.Path, name))
-	if err != nil {
-		return err
-	}
-	return t.CurrentDir.readChildren(t.sortingFunc)
+	return err
 }
 func (t *Tree) CreateDirectoryInCurrent(name string) error {
-	err := os.Mkdir(filepath.Join(t.CurrentDir.Path, name), os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return t.CurrentDir.readChildren(t.sortingFunc)
+	return os.Mkdir(filepath.Join(t.CurrentDir.Path, name), os.ModePerm)
 }
 func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
 	selectedNode := t.GetSelectedChild()
@@ -144,10 +133,6 @@ func (t *Tree) DeleteMarked() error {
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
-	err = t.Marked.Parent.readChildren(t.sortingFunc)
-	if err != nil {
-		return err
-	}
 	t.Marked = nil
 	return nil
 }
@@ -167,10 +152,6 @@ func (t *Tree) CopyMarkedToCurrentDir() error {
 	if err != nil {
 		return err // todo: this is not the same error...?
 	}
-	err = t.CurrentDir.readChildren(t.sortingFunc)
-	if err != nil {
-		return err
-	}
 	t.Marked = nil
 	return nil
 }
@@ -189,14 +170,6 @@ func (t *Tree) MoveMarkedToCurrentDir() error {
 	err = cmd.Run()
 	if err != nil {
 		return err // todo: this is not the same error...?
-	}
-	err = t.CurrentDir.readChildren(t.sortingFunc)
-	if err != nil {
-		return err
-	}
-	err = t.Marked.Parent.readChildren(t.sortingFunc)
-	if err != nil {
-		return err
 	}
 	t.Marked = nil
 	return nil

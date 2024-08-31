@@ -9,6 +9,10 @@ Navigate file tree in terminal.
 Currently the only way to install is by building from source...
 
 ```bash
+make install
+```
+or
+```bash
 go build .
 mv ./bt ~/.local/bin/bt
 ```
@@ -61,8 +65,10 @@ todo:
 - [~] Handle fs updates (kinda)
     - [ ] Unsubscribe from directories when leaving
     - [ ] Subscribe on 'enter'
-    - [ ] Don't manually read children
+    - [x] Don't manually update children
+- [ ] Error handling
 - [ ] Better style
+- [ ] Search
 
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?
