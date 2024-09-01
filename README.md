@@ -1,6 +1,6 @@
 # Better tree (arguably)
 
-Navigate file tree in terminal.
+Manipulate file tree in terminal.
 
 ![Usage screenshot](assets/bt-usage.png)
 
@@ -57,7 +57,7 @@ I like how [broot](https://github.com/Canop/broot) renders the ui, but I guess t
 That's why I'm writing my own simple tool for simple use cases. It's currently lacking a bunch of features (see todo list below), but fundamentals are here.
 
 ## TODO
-
+```
 - [x] Tree rendering
 - [x] File preview
 - [x] Scrolling trees, that don't fit the screen
@@ -91,3 +91,4 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 
 - [~] Project structure (kinda)
 - [ ] Tests
+```
