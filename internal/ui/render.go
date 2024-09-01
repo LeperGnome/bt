@@ -40,11 +40,13 @@ func (r *Renderer) renderHeading(s *state.State) (string, int) {
 	path := s.Tree.CurrentDir.Path + "/..."
 	changeTime := "--"
 	size := "0 B"
+	perm := "--"
 
 	if selected != nil {
 		path = selected.Path
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
+		perm = selected.Info.Mode().String()
 	}
 
 	markedPath := ""
@@ -64,14 +66,20 @@ func (r *Renderer) renderHeading(s *state.State) (string, int) {
 		operationBar += fmt.Sprintf(" | %s |", style.Render(string(s.InputBuf)))
 	}
 
+	errStyle := lipgloss.
+		NewStyle().
+		Foreground(lipgloss.Color("#EB4034"))
+
 	header := []string{
 		color.GreenString("> " + path),
 		color.MagentaString(fmt.Sprintf(
-			"%v : %s",
+			"%s | %v : %s",
+			perm,
 			changeTime,
 			size,
 		)),
 		operationBar,
+		errStyle.Render(s.ErrBuf),
 	}
 	return strings.Join(header, "\n"), len(header)
 }

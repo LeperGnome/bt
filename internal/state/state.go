@@ -46,6 +46,7 @@ type State struct {
 	Tree     *t.Tree
 	OpBuf    Operation
 	InputBuf []rune
+	ErrBuf   string
 	watcher  *fsnotify.Watcher
 }
 
@@ -74,7 +75,7 @@ func InitState(root string) (*State, <-chan NodeChange, error) {
 func (s *State) ProcessNodeChange(nodeChange NodeChange) tea.Cmd {
 	err := s.Tree.RefreshNodeByPath(nodeChange.Path)
 	if err != nil {
-		panic(err) // TODO
+		s.ErrBuf = err.Error()
 	}
 	return nil
 }
@@ -108,7 +109,7 @@ func (s *State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
 	case "enter":
 		err := s.Tree.RenameMarked(string(s.InputBuf))
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 		s.InputBuf = []rune{}
@@ -134,7 +135,7 @@ func (s *State) processKeyInsertFile(msg tea.KeyMsg) tea.Cmd {
 	case "enter":
 		err := s.Tree.CreateFileInCurrent(string(s.InputBuf))
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 		s.InputBuf = []rune{}
@@ -148,7 +149,7 @@ func (s *State) processKeyInsertDir(msg tea.KeyMsg) tea.Cmd {
 	case "enter":
 		err := s.Tree.CreateDirectoryInCurrent(string(s.InputBuf))
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 		s.InputBuf = []rune{}
@@ -189,7 +190,7 @@ func (s *State) processKeyDelete(msg tea.KeyMsg) tea.Cmd {
 	case "y":
 		err := s.Tree.DeleteMarked()
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 	default:
@@ -204,7 +205,7 @@ func (s *State) processKeyMove(msg tea.KeyMsg) tea.Cmd {
 	case "p":
 		err := s.Tree.MoveMarkedToCurrentDir()
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 	default:
@@ -217,7 +218,7 @@ func (s *State) processKeyCopy(msg tea.KeyMsg) tea.Cmd {
 	case "p":
 		err := s.Tree.CopyMarkedToCurrentDir()
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 		s.OpBuf = Noop
 	default:
@@ -230,6 +231,7 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "esc":
 		s.Tree.DropMark()
 		s.OpBuf = Noop
+		s.ErrBuf = ""
 	case "ctrl+c", "q":
 		return tea.Quit
 	case "j", "down":
@@ -243,7 +245,7 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		}
 		err := s.Tree.SetSelectedChildAsCurrent()
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 	case "h", "left":
 		s.Tree.SetParentAsCurrent()
@@ -274,7 +276,7 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "enter":
 		err := s.Tree.CollapseOrExpandSelected()
 		if err != nil {
-			panic(err) // TODO
+			s.ErrBuf = err.Error()
 		}
 	}
 	return nil
