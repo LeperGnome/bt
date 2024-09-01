@@ -75,9 +75,9 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] "G" to go bottom and "gg" to go top
 - [x] Creating files and directories
 - [x] Renaming files and directories
-- [~] Handle fs updates (kinda)
-    - [ ] Unsubscribe from directories when leaving
-    - [ ] Subscribe on 'enter'
+- [x] Handle fs updates
+    - [x] Unsubscribe from directories when leaving
+    - [x] Subscribe on 'enter'
     - [x] Don't manually update children
 - [~] Error handling (permissions denied, etc) (kinda)
 - [x] File permission in status bar

@@ -3,7 +3,6 @@ package state
 import (
 	t "github.com/LeperGnome/bt/internal/tree"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fsnotify/fsnotify"
 )
 
 type Operation int
@@ -43,37 +42,28 @@ func (o Operation) IsInput() bool {
 }
 
 type State struct {
-	Tree     *t.Tree
-	OpBuf    Operation
-	InputBuf []rune
-	ErrBuf   string
-	watcher  *fsnotify.Watcher
+	Tree        *t.Tree
+	OpBuf       Operation
+	InputBuf    []rune
+	ErrBuf      string
+	NodeChanges <-chan t.NodeChange
 }
 
-func InitState(root string) (*State, <-chan NodeChange, error) {
-	tree, err := t.InitTree(root, nil)
+func InitState(root string) (*State, error) {
+	tree, ncc, err := t.InitTree(root, nil)
 	if err != nil {
-		return nil, nil, err
-	}
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, nil, err
-	}
-	eventsChan := runFSWatcher(watcher)
-	err = watcher.Add(tree.Root.Path)
-	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return &State{
-		Tree:     &tree,
-		OpBuf:    Noop,
-		InputBuf: []rune{},
-		watcher:  watcher,
-	}, eventsChan, nil
+		Tree:        tree,
+		OpBuf:       Noop,
+		InputBuf:    []rune{},
+		NodeChanges: ncc,
+	}, nil
 }
 
-func (s *State) ProcessNodeChange(nodeChange NodeChange) tea.Cmd {
-	err := s.Tree.RefreshNodeByPath(nodeChange.Path)
+func (s *State) ProcessNodeChange(nodeChange t.NodeChange) tea.Cmd {
+	err := s.Tree.RefreshNodeParentByPath(nodeChange.Path)
 	if err != nil {
 		s.ErrBuf = err.Error()
 	}
@@ -239,10 +229,6 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "k", "up":
 		s.Tree.SelectPreviousChild()
 	case "l", "right":
-		selected := s.Tree.GetSelectedChild()
-		if selected != nil {
-			s.watcher.Add(selected.Path)
-		}
 		err := s.Tree.SetSelectedChildAsCurrent()
 		if err != nil {
 			s.ErrBuf = err.Error()

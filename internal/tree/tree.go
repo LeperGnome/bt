@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type Tree struct {
@@ -16,6 +18,7 @@ type Tree struct {
 	CurrentDir  *Node
 	Marked      *Node
 	sortingFunc NodeSortingFunc
+	watcher     *fsnotify.Watcher
 }
 
 func (t *Tree) GetSelectedChild() *Node {
@@ -24,7 +27,7 @@ func (t *Tree) GetSelectedChild() *Node {
 	}
 	return nil
 }
-func (t *Tree) RefreshNodeByPath(path string) error {
+func (t *Tree) RefreshNodeParentByPath(path string) error {
 	// I'm assuming, that all paths are relative to my tree root
 	parentDir := filepath.Dir(path)
 	cur := t.Root
@@ -100,6 +103,7 @@ func (t *Tree) SetSelectedChildAsCurrent() error {
 		if err != nil {
 			return err
 		}
+		t.watcher.Add(selectedChild.Path)
 	}
 	t.CurrentDir = selectedChild
 	return nil
@@ -181,23 +185,24 @@ func (t *Tree) CollapseOrExpandSelected() error {
 	}
 	if selectedChild.Children != nil {
 		selectedChild.orphanChildren()
+		t.watcher.Remove(selectedChild.Path)
 	} else {
 		err := selectedChild.readChildren(t.sortingFunc)
 		if err != nil {
 			return err
 		}
+		t.watcher.Add(selectedChild.Path)
 	}
 	return nil
 }
 
-func InitTree(dir string, sortingFunc NodeSortingFunc) (Tree, error) {
-	var tree Tree
+func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange, error) {
 	rootInfo, err := os.Lstat(dir)
 	if err != nil {
-		return tree, err
+		return nil, nil, err
 	}
 	if !rootInfo.IsDir() {
-		return tree, fmt.Errorf("%s is not a directory", dir)
+		return nil, nil, fmt.Errorf("%s is not a directory", dir)
 	}
 	if sortingFunc == nil {
 		sortingFunc = defaultNodeSorting
@@ -212,14 +217,29 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (Tree, error) {
 
 	err = root.readChildren(sortingFunc)
 	if err != nil {
-		return tree, err
+		return nil, nil, err
 	}
 	if len(root.Children) == 0 {
-		return tree, fmt.Errorf("Can't initialize on empty directory '%s'", dir)
+		return nil, nil, fmt.Errorf("Can't initialize on empty directory '%s'", dir)
 	}
 
-	tree = Tree{Root: root, CurrentDir: root, sortingFunc: sortingFunc}
-	return tree, nil
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, nil, err
+	}
+	changeChan := runFSWatcher(watcher)
+	err = watcher.Add(root.Path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tree := &Tree{
+		Root:        root,
+		CurrentDir:  root,
+		sortingFunc: sortingFunc,
+		watcher:     watcher,
+	}
+	return tree, changeChan, nil
 }
 
 // Checks if fname already exists in targetDir.

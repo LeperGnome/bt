@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/LeperGnome/bt/internal/state"
+	"github.com/LeperGnome/bt/internal/tree"
 	ui "github.com/LeperGnome/bt/internal/ui"
 )
 
@@ -16,11 +17,10 @@ type model struct {
 	windowWidth  int
 	appState     *state.State
 	renderer     *ui.Renderer
-	eventsChan   <-chan state.NodeChange
 }
 
 func (m model) Init() tea.Cmd {
-	return listenFSEvents(m.eventsChan)
+	return listenFSEvents(m.appState.NodeChanges)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -30,9 +30,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 	case tea.KeyMsg:
 		return m, m.appState.ProcessKey(msg)
-	case state.NodeChange:
+	case tree.NodeChange:
 		m.appState.ProcessNodeChange(msg)
-		return m, listenFSEvents(m.eventsChan)
+		return m, listenFSEvents(m.appState.NodeChanges)
 	}
 	return m, nil
 }
@@ -41,19 +41,18 @@ func (m model) View() string {
 }
 
 func newModel(root string, pad int) (model, error) {
-	s, ch, err := state.InitState(root)
+	s, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
 	renderer := &ui.Renderer{EdgePadding: pad}
 	return model{
-		appState:   s,
-		renderer:   renderer,
-		eventsChan: ch,
+		appState: s,
+		renderer: renderer,
 	}, nil
 }
 
-func listenFSEvents(eventsChan <-chan state.NodeChange) tea.Cmd {
+func listenFSEvents(eventsChan <-chan tree.NodeChange) tea.Cmd {
 	return func() tea.Msg {
 		return <-eventsChan
 	}
