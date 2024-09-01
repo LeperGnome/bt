@@ -176,7 +176,6 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		indent := strings.Repeat("  ", depth)
 		indentRuneCount := utf8.RuneCountInString(indent)
 
-		// TODO: probably bug here
 		if nameRuneCountNoStyle+indentRuneCount > widthLim-6 { // 6 = len([]rune{"... <-"})
 			name = string([]rune(name)[:max(0, widthLim-indentRuneCount-6)]) + "..."
 		}
