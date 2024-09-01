@@ -7,7 +7,5 @@ build:
 run:
 	go run ./cmd/bt/main.go
 
-debug: build run
-
 install: build
 	cp ./bin/bt ~/.local/bin/bt
