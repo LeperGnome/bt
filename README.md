@@ -43,7 +43,8 @@ Key bindings:
 | D             | Delete selected child                                  |
 | if / id       | Create file (if) / directory (id) in current directory |
 | r             | Rename selected child                                  |
-
+| enter         | Collapse / expand selected directory                   |
+| q / ctrl+c    | Exit                                                   |
 
 ## Motivation
 
@@ -77,17 +78,18 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
     - [ ] Unsubscribe from directories when leaving
     - [ ] Subscribe on 'enter'
     - [x] Don't manually update children
+- [ ] File permission in status bar
 - [ ] Error handling (permissions denied, etc)
 - [ ] Edit selected file in editor of choice
 - [ ] Jump to current directory
 - [ ] Selecting multiple files
 - [ ] Go higher then local root
 - [ ] Make current directory a local root
-- [ ] Search
 - [ ] Better style
 
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?
+- [ ] Search?
 
 - [~] Project structure (kinda)
 - [ ] Tests
