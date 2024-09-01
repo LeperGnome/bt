@@ -51,7 +51,7 @@ Key bindings:
 I find myself disliking a majority of column-based terminal file managers.
 The reason for that is - when I need to copy/move some files across nested subdirectories, 
 I constantly lose context of where I am currently, because columns always go left and right. 
-Even though those file managers are really mature loaded with features (e.g. [ranger](https://github.com/ranger/ranger), [lf](https://github.com/gokcehan/lf), [xplr](https://github.com/sayanarijit/xplr), [nnn](https://github.com/jarun/nnn)), it's uneasy for me to perform simple tasks.
+Even though those file managers are really mature and loaded with features (e.g. [ranger](https://github.com/ranger/ranger), [lf](https://github.com/gokcehan/lf), [xplr](https://github.com/sayanarijit/xplr), [nnn](https://github.com/jarun/nnn)), it's uneasy for me to perform simple tasks.
 
 I like how [broot](https://github.com/Canop/broot) renders the ui, but I guess that it's mainly usable for exploring a file tree, but not manipulating it (at least I found it this way, when I had to type a target directory for `move`).
 
