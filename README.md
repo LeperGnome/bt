@@ -56,10 +56,8 @@ I like how [broot](https://github.com/Canop/broot) renders the ui, but I guess t
 
 That's why I'm writing my own simple tool for simple use cases. It's currently lacking a bunch of features (see todo list below), but fundamentals are here.
 
----
+## TODO
 
-```
-todo:
 - [x] Tree rendering
 - [x] File preview
 - [x] Scrolling trees, that don't fit the screen
@@ -93,4 +91,3 @@ todo:
 
 - [~] Project structure (kinda)
 - [ ] Tests
-```
