@@ -48,13 +48,13 @@ Key bindings:
 ## Motivation
 
 I find myself disliking a majority of column-based terminal file managers.
-The reason for that is - when I need to copy/move some files across nested subdirecotries, 
-I constantly loose context of where I am currently, because columns always go left and right. 
-Even tough those file managers are really mature loaded with features (e.g. [ranger](https://github.com/ranger/ranger), [lf](https://github.com/gokcehan/lf), [xplr](https://github.com/sayanarijit/xplr), [nnn](https://github.com/jarun/nnn)), it's uneasy for me to perform simple tasks.
+The reason for that is - when I need to copy/move some files across nested subdirectories, 
+I constantly lose context of where I am currently, because columns always go left and right. 
+Even though those file managers are really mature loaded with features (e.g. [ranger](https://github.com/ranger/ranger), [lf](https://github.com/gokcehan/lf), [xplr](https://github.com/sayanarijit/xplr), [nnn](https://github.com/jarun/nnn)), it's uneasy for me to perform simple tasks.
 
-I like how [broot](https://github.com/Canop/broot) renders the ui, but I guess that it's mainly usable for exploring a file tree, but not manipulating it (at least I found it this way, when I had to type target directory for `move`).
+I like how [broot](https://github.com/Canop/broot) renders the ui, but I guess that it's mainly usable for exploring a file tree, but not manipulating it (at least I found it this way, when I had to type a target directory for `move`).
 
-That's why I'm writing my own simple tool for simple use cases. It's currently lacking a bunch of features (see todo list below), but fundamentals are here.
+That's why I'm writing my own simple tool for simple use cases. It's currently lacking a bunch of features (see todo list below), but the fundamentals are here.
 
 ## TODO
 ```
