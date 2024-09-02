@@ -81,12 +81,12 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
     - [x] Don't manually update children
 - [~] Error handling (permissions denied, etc) (kinda)
 - [x] File permission in status bar
+- [x] Stylesheets
 - [ ] Edit selected file in editor of choice
 - [ ] Jump to current directory
 - [ ] Selecting multiple files
 - [ ] Go higher then local root
 - [ ] Make current directory a local root
-- [ ] Better style
 
 - [ ] Sorting function as a flag?
 - [ ] Inline file permissions and size?

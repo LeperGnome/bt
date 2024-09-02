@@ -3,12 +3,12 @@ package ui
 import (
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/fatih/color"
 
 	"github.com/LeperGnome/bt/internal/state"
 	t "github.com/LeperGnome/bt/internal/tree"
@@ -22,6 +22,7 @@ const (
 )
 
 type Renderer struct {
+	Style       Stylesheet
 	EdgePadding int
 	offsetMem   int
 }
@@ -60,26 +61,21 @@ func (r *Renderer) renderHeading(s *state.State) (string, int) {
 	}
 
 	if s.OpBuf.IsInput() {
-		style := lipgloss.
-			NewStyle().
-			Background(lipgloss.Color("#3C3C3C"))
-		operationBar += fmt.Sprintf(" | %s |", style.Render(string(s.InputBuf)))
+		operationBar += fmt.Sprintf(" │ %s │", r.Style.OperationBarInput.Render(string(s.InputBuf)))
 	}
 
-	errStyle := lipgloss.
-		NewStyle().
-		Foreground(lipgloss.Color("#EB4034"))
-
 	header := []string{
-		color.GreenString("> " + path),
-		color.MagentaString(fmt.Sprintf(
-			"%s | %v : %s",
-			perm,
-			changeTime,
-			size,
-		)),
-		operationBar,
-		errStyle.Render(s.ErrBuf),
+		r.Style.SelectedPath.Render("> " + path),
+		fmt.Sprintf(
+			"%s %s %v %s %s",
+			r.Style.FinfoPermissions.Render(perm),
+			r.Style.FinfoSep.Render("│"),
+			r.Style.FinfoLastUpdated.Render(changeTime),
+			r.Style.FinfoSep.Render("│"),
+			r.Style.FinfoSize.Render(size),
+		),
+		r.Style.OperationBar.Render(operationBar),
+		r.Style.ErrBar.Render(s.ErrBuf),
 	}
 	return strings.Join(header, "\n"), len(header)
 }
@@ -113,7 +109,7 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
 	contentStyle := lipgloss.
 		NewStyle().
-		Italic(true).
+		Inherit(r.Style.ContentPreview).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderLeft(true).
 		MarginLeft(leftMargin).
@@ -189,19 +185,22 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		}
 
 		if node.Info.IsDir() {
-			name = color.BlueString(node.Info.Name())
+			name = r.Style.TreeDirecotryName.Render(node.Info.Name())
+		}
+		if node.Info.Mode().IsRegular() {
+			name = r.Style.TreeRegularFileName.Render(name)
+		}
+		if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			name = r.Style.TreeLinkName.Render(name)
 		}
 		if tree.Marked == node {
-			s := lipgloss.
-				NewStyle().
-				Background(lipgloss.Color("#3C3C3C"))
-			name = s.Render(name)
+			name = r.Style.TreeMarkedNode.Render(name)
 		}
 
 		repr := indent + name
 
 		if tree.GetSelectedChild() == node {
-			repr += color.YellowString(" <-")
+			repr += r.Style.TreeSelectionArrow.Render(" <-")
 			currentLine = linen
 		}
 		lines = append(lines, repr)
@@ -209,7 +208,7 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+color.YellowString(" <-"))
+				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+r.Style.TreeSelectionArrow.Render(" <-"))
 				currentLine = linen + 1
 			}
 			for i := len(node.Children) - 1; i >= 0; i-- {

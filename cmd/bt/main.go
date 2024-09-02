@@ -40,12 +40,12 @@ func (m model) View() string {
 	return m.renderer.Render(m.appState, m.windowHeight, m.windowWidth)
 }
 
-func newModel(root string, pad int) (model, error) {
+func newModel(root string, pad int, style ui.Stylesheet) (model, error) {
 	s, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := &ui.Renderer{EdgePadding: pad}
+	renderer := &ui.Renderer{EdgePadding: pad, Style: style}
 	return model{
 		appState: s,
 		renderer: renderer,
@@ -67,7 +67,7 @@ func main() {
 		rootPath = "."
 	}
 
-	m, err := newModel(rootPath, int(*paddingPtr))
+	m, err := newModel(rootPath, int(*paddingPtr), ui.DefaultStylesheet)
 	if err != nil {
 		fmt.Printf("Error on init: %v", err)
 		os.Exit(1)
