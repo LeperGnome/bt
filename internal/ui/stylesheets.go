@@ -40,8 +40,11 @@ var DefaultStylesheet = Stylesheet{
 	TreeRegularFileName: lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	TreeDirecotryName:   lipgloss.NewStyle().Foreground(lipgloss.Color("#6D74AC")),
 	TreeLinkName:        lipgloss.NewStyle().Foreground(lipgloss.Color("#6DACA4")),
-	TreeMarkedNode:      lipgloss.NewStyle().Background(lipgloss.Color("#3C3C3C")),
-	TreeSelectionArrow:  lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
+	TreeMarkedNode: lipgloss.NewStyle().
+		BorderLeft(true).
+		BorderStyle(lipgloss.InnerHalfBlockBorder()).
+		Background(lipgloss.Color("#262626")),
+	TreeSelectionArrow: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
 
 	ContentPreview: lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("#B8BCD6")),
 }
