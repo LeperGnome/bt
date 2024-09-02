@@ -107,9 +107,7 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 	content = content[:n]
 
 	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
-	contentStyle := lipgloss.
-		NewStyle().
-		Inherit(r.Style.ContentPreview).
+	contentStyle := r.Style.ContentPreview.
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderLeft(true).
 		MarginLeft(leftMargin).
@@ -186,13 +184,12 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 
 		if node.Info.IsDir() {
 			name = r.Style.TreeDirecotryName.Render(node.Info.Name())
-		}
-		if node.Info.Mode().IsRegular() {
+		} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			name = r.Style.TreeLinkName.Render(name)
+		} else {
 			name = r.Style.TreeRegularFileName.Render(name)
 		}
-		if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			name = r.Style.TreeLinkName.Render(name)
-		}
+
 		if tree.Marked == node {
 			name = r.Style.TreeMarkedNode.Render(name)
 		}
