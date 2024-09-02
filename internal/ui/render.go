@@ -183,7 +183,7 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		}
 
 		if node.Info.IsDir() {
-			name = r.Style.TreeDirecotryName.Render(node.Info.Name())
+			name = r.Style.TreeDirecotryName.Render(name)
 		} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
 			name = r.Style.TreeLinkName.Render(name)
 		} else {
