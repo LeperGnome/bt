@@ -6,15 +6,14 @@ Manipulate file tree in terminal.
 
 ## Installation
 
-Currently the only way to install is by building from source...
+```bash
+go install github.com/LeperGnome/bt/cmd/bt@latest
+```
+
+Or from source
 
 ```bash
 make install
-```
-or
-```bash
-go build .
-mv ./bt ~/.local/bin/bt
 ```
 
 ## Usage
