@@ -40,6 +40,7 @@ Key bindings:
 | D             | Delete selected child                                  |
 | if / id       | Create file (if) / directory (id) in current directory |
 | r             | Rename selected child                                  |
+| e             | Edit selected file in $EDITOR                          |
 | gg            | Go to top most child in current directory              |
 | G             | Go to last child in current directory                  |
 | enter         | Collapse / expand selected directory                   |
@@ -81,7 +82,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [~] Error handling (permissions denied, etc) (kinda)
 - [x] File permission in status bar
 - [x] Stylesheets
-- [ ] Edit selected file in editor of choice
+- [x] Edit selected file in editor of choice
 - [ ] Jump to current directory
 - [ ] Selecting multiple files
 - [ ] Go higher then local root

@@ -3,6 +3,8 @@ package state
 import (
 	t "github.com/LeperGnome/bt/internal/tree"
 	tea "github.com/charmbracelet/bubbletea"
+	"os"
+	"os/exec"
 )
 
 type Operation int
@@ -259,6 +261,11 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 			s.InputBuf = []rune(s.Tree.Marked.Info.Name())
 			s.OpBuf = Rename
 		}
+	case "e":
+		child := s.Tree.GetSelectedChild()
+		if child != nil && child.Info.Mode().IsRegular() {
+			return openEditor(child.Path)
+		}
 	case "enter":
 		err := s.Tree.CollapseOrExpandSelected()
 		if err != nil {
@@ -266,4 +273,15 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+func openEditor(path string) tea.Cmd {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+	c := exec.Command(editor, path)
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		return nil
+	})
 }
