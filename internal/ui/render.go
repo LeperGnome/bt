@@ -138,7 +138,7 @@ func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) [
 	if windowHeight > 0 {
 		// cursor is out for 'top' boundary
 		if currentLine+1 > windowHeight+offset-r.EdgePadding {
-			offset = min(currentLine+1-windowHeight+r.EdgePadding, linesLen-windowHeight)
+			offset = max(min(currentLine+1-windowHeight+r.EdgePadding, linesLen-windowHeight), 0)
 		}
 		// cursor is out for 'bottom' boundary
 		if currentLine < r.EdgePadding+offset {
