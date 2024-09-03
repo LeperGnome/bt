@@ -16,9 +16,14 @@ import (
 )
 
 const (
-	previewBytesLimit int64 = 10_000
-	minHeight               = 10
-	minWidth                = 10
+	previewBytesLimit   int64 = 10_000
+	minHeight                 = 10
+	minWidth                  = 10
+	indentParent              = "│  "
+	indentCurrent             = "├─ "
+	indentCurrentLast         = "└─ "
+	indentEmpty               = "   "
+	emptydirContentName       = "..."
 )
 
 type Renderer struct {
@@ -157,17 +162,30 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 
 	type stackEl struct {
 		*t.Node
-		int
+		string
+		bool
 	}
 	lines := []string{}
-	s := stack.NewStack(stackEl{tree.Root, 0})
+	s := stack.NewStack(stackEl{tree.Root, "", false})
 
 	for s.Len() > 0 {
 		el := s.Pop()
 		linen += 1
 
 		node := el.Node
-		depth := el.int
+		isLast := el.bool
+		parentIndent := el.string
+
+		var indent string
+		if node == tree.Root {
+			indent = ""
+		} else if isLast {
+			indent = parentIndent + indentCurrentLast
+			parentIndent = parentIndent + indentEmpty
+		} else {
+			indent = parentIndent + indentCurrent
+			parentIndent = parentIndent + indentParent
+		}
 
 		if node == nil {
 			continue
@@ -175,12 +193,13 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 
 		name := node.Info.Name()
 		nameRuneCountNoStyle := utf8.RuneCountInString(name)
-		indent := strings.Repeat("  ", depth)
 		indentRuneCount := utf8.RuneCountInString(indent)
 
 		if nameRuneCountNoStyle+indentRuneCount > widthLim-6 { // 6 = len([]rune{"... <-"})
 			name = string([]rune(name)[:max(0, widthLim-indentRuneCount-6)]) + "..."
 		}
+
+		indent = r.Style.TreeIndent.Render(indent)
 
 		if node.Info.IsDir() {
 			name = r.Style.TreeDirecotryName.Render(name)
@@ -205,12 +224,13 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				lines = append(lines, strings.Repeat("  ", depth+1)+"..."+r.Style.TreeSelectionArrow.Render(" <-"))
+				emptyIndent := r.Style.TreeIndent.Render(parentIndent + indentCurrentLast)
+				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(" <-"))
 				currentLine = linen + 1
 			}
 			for i := len(node.Children) - 1; i >= 0; i-- {
 				ch := node.Children[i]
-				s.Push(stackEl{ch, depth + 1})
+				s.Push(stackEl{ch, parentIndent, i == len(node.Children)-1})
 			}
 		}
 	}

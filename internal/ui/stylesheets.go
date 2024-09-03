@@ -20,6 +20,7 @@ type Stylesheet struct {
 	TreeLinkName        lipgloss.Style
 	TreeMarkedNode      lipgloss.Style
 	TreeSelectionArrow  lipgloss.Style
+	TreeIndent          lipgloss.Style
 
 	ContentPreview lipgloss.Style
 }
@@ -30,7 +31,7 @@ var DefaultStylesheet = Stylesheet{
 	FinfoPermissions: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
 	FinfoLastUpdated: lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	FinfoSize:        lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
-	FinfoSep:         lipgloss.NewStyle().Foreground(lipgloss.Color("#262626")),
+	FinfoSep:         lipgloss.NewStyle().Foreground(lipgloss.Color("#2b2b2b")),
 
 	OperationBar:      lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	OperationBarInput: lipgloss.NewStyle().Background(lipgloss.Color("#3C3C3C")),
@@ -43,8 +44,9 @@ var DefaultStylesheet = Stylesheet{
 	TreeMarkedNode: lipgloss.NewStyle().
 		BorderLeft(true).
 		BorderStyle(lipgloss.InnerHalfBlockBorder()).
-		Background(lipgloss.Color("#262626")),
+		Background(lipgloss.Color("#2b2b2b")),
 	TreeSelectionArrow: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
+	TreeIndent:         lipgloss.NewStyle().Foreground(lipgloss.Color("#2b2b2b")),
 
 	ContentPreview: lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("#B8BCD6")),
 }
