@@ -83,13 +83,13 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] File permission in status bar
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
+- [ ] Mark multiple files
+- [ ] Marked to stdout on exit
 - [ ] Jump to current directory
-- [ ] Selecting multiple files
 - [ ] Go higher then local root
 - [ ] Make current directory a local root
 
 - [ ] Sorting function as a flag?
-- [ ] Inline file permissions and size?
 - [ ] Search?
 
 - [~] Project structure (kinda)
