@@ -16,6 +16,7 @@ type Node struct {
 	Children         []*Node // nil - not read or it's a file
 	Parent           *Node
 	selectedChildIdx int
+	contentCache     []byte
 }
 
 func (n *Node) SelectLast() {

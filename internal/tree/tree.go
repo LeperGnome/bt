@@ -68,6 +68,10 @@ func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
 	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {
 		return 0, fmt.Errorf("file not selected or is irregular")
 	}
+	if selectedNode.contentCache != nil {
+		copy(buf, selectedNode.contentCache)
+		return len(selectedNode.contentCache), nil
+	}
 	f, err := os.Open(selectedNode.Path)
 	defer f.Close()
 	if err != nil {
@@ -78,6 +82,7 @@ func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	selectedNode.contentCache = slices.Clone(buf[:n])
 	return n, nil
 }
 func (t *Tree) SelectNextChild() {

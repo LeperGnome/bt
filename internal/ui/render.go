@@ -30,6 +30,7 @@ type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
 	offsetMem   int
+	contentBuf  [previewBytesLimit]byte
 }
 
 func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
@@ -104,12 +105,11 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 	renderedStyledTree := treeStyle.Render(strings.Join(croppedTree, "\n"))
 
 	// rendering file content
-	content := make([]byte, previewBytesLimit)
-	n, err := tree.ReadSelectedChildContent(content, previewBytesLimit)
+	n, err := tree.ReadSelectedChildContent(r.contentBuf[:], previewBytesLimit)
 	if err != nil {
 		return renderedStyledTree
 	}
-	content = content[:n]
+	content := r.contentBuf[:n]
 
 	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
 	contentStyle := r.Style.ContentPreview.
