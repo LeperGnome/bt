@@ -37,6 +37,12 @@ func (t *Tree) SearchNodes(name string) []*Node {
 	}
 	return res
 }
+func (t *Tree) SetNodeAsSelected(node *Node) {
+	t.CurrentDir = node.Parent
+	if i := slices.Index(t.CurrentDir.Children, node); i != -1 {
+		t.CurrentDir.selectedChildIdx = i
+	}
+}
 func (t *Tree) RefreshNodeParentByPath(path string) error {
 	// I'm assuming, that all paths are relative to my tree root
 	parentDir := filepath.Dir(path)

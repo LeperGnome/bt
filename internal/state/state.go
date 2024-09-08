@@ -52,6 +52,8 @@ type State struct {
 	ErrBuf        string
 	NodeChanges   <-chan t.NodeChange
 	SearchResults []*t.Node
+
+	currentSearchResultIdx int
 }
 
 func InitState(root string) (*State, error) {
@@ -60,10 +62,11 @@ func InitState(root string) (*State, error) {
 		return nil, err
 	}
 	return &State{
-		Tree:        tree,
-		OpBuf:       Noop,
-		InputBuf:    []rune{},
-		NodeChanges: ncc,
+		Tree:                   tree,
+		OpBuf:                  Noop,
+		InputBuf:               []rune{},
+		NodeChanges:            ncc,
+		currentSearchResultIdx: -1,
 	}, nil
 }
 
@@ -288,9 +291,21 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if child != nil && child.Info.Mode().IsRegular() {
 			return openEditor(child.Path)
 		}
+	case "n":
+		if l := len(s.SearchResults); l > 0 {
+			s.currentSearchResultIdx += 1
+			// cycle
+			if s.currentSearchResultIdx == l {
+				s.currentSearchResultIdx = 0
+			}
+			searchedNode := s.SearchResults[s.currentSearchResultIdx]
+			s.Tree.SetNodeAsSelected(searchedNode)
+		}
+
 	case "/":
 		s.InputBuf = []rune{}
 		s.OpBuf = Search
+		s.currentSearchResultIdx = -1
 	case "enter":
 		err := s.Tree.CollapseOrExpandSelected()
 		if err != nil {
