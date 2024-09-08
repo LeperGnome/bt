@@ -19,6 +19,7 @@ const (
 	InsertFile
 	InsertDir
 	Rename
+	Search
 )
 
 func (o Operation) Repr() string {
@@ -32,11 +33,12 @@ func (o Operation) Repr() string {
 		"enter new file name:",
 		"enter new directory name:",
 		"renaming",
+		"searching: ",
 	}[o]
 }
 func (o Operation) IsInput() bool {
 	switch o {
-	case InsertDir, InsertFile, Rename:
+	case InsertDir, InsertFile, Rename, Search:
 		return true
 	default:
 		return false
@@ -44,11 +46,12 @@ func (o Operation) IsInput() bool {
 }
 
 type State struct {
-	Tree        *t.Tree
-	OpBuf       Operation
-	InputBuf    []rune
-	ErrBuf      string
-	NodeChanges <-chan t.NodeChange
+	Tree          *t.Tree
+	OpBuf         Operation
+	InputBuf      []rune
+	ErrBuf        string
+	NodeChanges   <-chan t.NodeChange
+	SearchResults []*t.Node
 }
 
 func InitState(root string) (*State, error) {
@@ -92,9 +95,27 @@ func (s *State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
 		return s.processKeyInsertDir(msg)
 	case Rename:
 		return s.processKeyRename(msg)
+	case Search:
+		return s.processKeySearch(msg)
 	default:
 		return s.processKeyDefault(msg)
 	}
+}
+func (s *State) processKeySearch(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "enter":
+		// TODO exit input, keep search results
+		s.OpBuf = Noop
+	default:
+		out := s.processKeyAnyInput(msg)
+		if len(s.InputBuf) > 0 {
+			s.SearchResults = s.Tree.SearchNodes(string(s.InputBuf))
+		} else {
+			s.SearchResults = nil
+		}
+		return out
+	}
+	return nil
 }
 func (s *State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
@@ -224,6 +245,7 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		s.Tree.DropMark()
 		s.OpBuf = Noop
 		s.ErrBuf = ""
+		s.SearchResults = nil
 	case "ctrl+c", "q":
 		return tea.Quit
 	case "j", "down":
@@ -266,6 +288,9 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if child != nil && child.Info.Mode().IsRegular() {
 			return openEditor(child.Path)
 		}
+	case "/":
+		s.InputBuf = []rune{}
+		s.OpBuf = Search
 	case "enter":
 		err := s.Tree.CollapseOrExpandSelected()
 		if err != nil {

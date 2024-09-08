@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -34,7 +35,7 @@ type Renderer struct {
 
 func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
 	renderedHeading, headLen := r.renderHeading(s)
-	renderedTree := r.renderTreeWithContent(s.Tree, winHeight-headLen, winWidth)
+	renderedTree := r.renderTreeWithContent(s.Tree, s.SearchResults, winHeight-headLen, winWidth)
 
 	return renderedHeading + "\n" + renderedTree
 }
@@ -85,7 +86,7 @@ func (r *Renderer) renderHeading(s *state.State) (string, int) {
 	return strings.Join(header, "\n"), len(header)
 }
 
-func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) string {
+func (r *Renderer) renderTreeWithContent(tree *t.Tree, searchResults []*t.Node, winHeight, winWidth int) string {
 	if winWidth < minWidth || winHeight < minHeight {
 		return "too small =(\n"
 	}
@@ -95,7 +96,7 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
 
 	// rendering tree
-	renderedTree, selectedRow := r.renderTree(tree, sectionWidth)
+	renderedTree, selectedRow := r.renderTree(tree, searchResults, sectionWidth)
 	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
 
 	treeStyle := lipgloss.
@@ -156,7 +157,7 @@ func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) [
 }
 
 // Returns lines as slice and index of selected line.
-func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
+func (r *Renderer) renderTree(tree *t.Tree, searchResults []*t.Node, widthLim int) ([]string, int) {
 	linen := -1
 	currentLine := 0
 
@@ -207,6 +208,10 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 			name = r.Style.TreeLinkName.Render(name)
 		} else {
 			name = r.Style.TreeRegularFileName.Render(name)
+		}
+
+		if slices.Contains(searchResults, node) {
+			name = r.Style.TreeSearchResult.Render(name)
 		}
 
 		if tree.Marked == node {

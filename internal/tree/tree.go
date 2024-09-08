@@ -19,6 +19,7 @@ type Tree struct {
 	Marked      *Node
 	sortingFunc NodeSortingFunc
 	watcher     *fsnotify.Watcher
+	searchIndex map[string]*Node
 }
 
 func (t *Tree) GetSelectedChild() *Node {
@@ -26,6 +27,15 @@ func (t *Tree) GetSelectedChild() *Node {
 		return t.CurrentDir.Children[t.CurrentDir.selectedChildIdx]
 	}
 	return nil
+}
+func (t *Tree) SearchNodes(name string) []*Node {
+	var res []*Node
+	for n, ptr := range t.searchIndex {
+		if strings.Contains(n, name) {
+			res = append(res, ptr)
+		}
+	}
+	return res
 }
 func (t *Tree) RefreshNodeParentByPath(path string) error {
 	// I'm assuming, that all paths are relative to my tree root
@@ -92,18 +102,16 @@ func (t *Tree) SelectPreviousChild() {
 }
 func (t *Tree) SetSelectedChildAsCurrent() error {
 	selectedChild := t.GetSelectedChild()
+	// In an empty directory.
 	if selectedChild == nil {
 		return nil
 	}
-	if !selectedChild.Info.IsDir() {
-		return nil
-	}
+	// Directory is currently collapsed.
 	if selectedChild.Children == nil {
-		err := selectedChild.readChildren(t.sortingFunc)
+		err := t.openDir(selectedChild)
 		if err != nil {
 			return err
 		}
-		t.watcher.Add(selectedChild.Path)
 	}
 	t.CurrentDir = selectedChild
 	return nil
@@ -184,14 +192,28 @@ func (t *Tree) CollapseOrExpandSelected() error {
 		return nil
 	}
 	if selectedChild.Children != nil {
-		selectedChild.orphanChildren()
-		t.watcher.Remove(selectedChild.Path)
+		t.closeDir(selectedChild)
 	} else {
-		err := selectedChild.readChildren(t.sortingFunc)
-		if err != nil {
-			return err
-		}
-		t.watcher.Add(selectedChild.Path)
+		return t.openDir(selectedChild)
+	}
+	return nil
+}
+func (t *Tree) closeDir(dir *Node) {
+	dir.orphanChildren()
+	t.watcher.Remove(dir.Path)
+	// TODO: remove recursive children...
+}
+func (t *Tree) openDir(dir *Node) error {
+	if !dir.Info.IsDir() {
+		return nil
+	}
+	err := dir.readChildren(t.sortingFunc)
+	if err != nil {
+		return err
+	}
+	t.watcher.Add(dir.Path)
+	for _, ch := range dir.Children {
+		t.searchIndex[ch.Info.Name()] = ch
 	}
 	return nil
 }
@@ -215,6 +237,7 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange
 		Children: []*Node{},
 	}
 
+	// Reading root directory children.
 	err = root.readChildren(sortingFunc)
 	if err != nil {
 		return nil, nil, err
@@ -223,6 +246,13 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange
 		return nil, nil, fmt.Errorf("Can't initialize on empty directory '%s'", dir)
 	}
 
+	// Initializing search index.
+	searchIndex := map[string]*Node{}
+	for _, ch := range root.Children {
+		searchIndex[ch.Info.Name()] = ch
+	}
+
+	// Setup watcher for root directory
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, nil, err
@@ -238,6 +268,7 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange
 		CurrentDir:  root,
 		sortingFunc: sortingFunc,
 		watcher:     watcher,
+		searchIndex: searchIndex,
 	}
 	return tree, changeChan, nil
 }
