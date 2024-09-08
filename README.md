@@ -89,6 +89,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
         - not removing nodes from search index -> strange results after collapse
         - order of found nodes is not related to their position on the screen
         - search results code seems bad (do I move it to the tree?)
+        - can't really combine with other commands like copy or move, because "/" drops their operation
 - [ ] Mark multiple files
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
