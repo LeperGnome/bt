@@ -43,6 +43,7 @@ Key bindings:
 | e             | Edit selected file in $EDITOR                          |
 | gg            | Go to top most child in current directory              |
 | G             | Go to last child in current directory                  |
+| /             | Search visible files (experimental)                    |
 | enter         | Collapse / expand selected directory                   |
 | esc           | Clear error message / stop current operation           |
 | q / ctrl+c    | Exit                                                   |
@@ -83,6 +84,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] File permission in status bar
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
+- [ ] Search in opened directories
 - [ ] Mark multiple files
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
@@ -90,7 +92,6 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [ ] Make current directory a local root
 
 - [ ] Sorting function as a flag?
-- [ ] Search?
 
 - [~] Project structure (kinda)
 - [ ] Tests
