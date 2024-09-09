@@ -3,7 +3,7 @@ module github.com/LeperGnome/bt
 go 1.22.2
 
 require (
-	github.com/charmbracelet/bubbletea v0.26.6
+	github.com/LeperGnome/bubbletea v1.1.3
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/fsnotify/fsnotify v1.7.0
 )
@@ -26,6 +26,5 @@ require (
 	golang.org/x/text v0.3.8 // indirect
 )
 
-replace github.com/charmbracelet/bubbletea => github.com/LeperGnome/bubbletea v1.1.2
-
-// replace github.com/charmbracelet/bubbletea => ../bubbletea
+// replace github.com/charmbracelet/bubbletea => github.com/LeperGnome/bubbletea v1.1.2
+// replace github.com/LeperGnome/bubbletea => ../bubbletea

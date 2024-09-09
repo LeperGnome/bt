@@ -2,7 +2,7 @@ package state
 
 import (
 	t "github.com/LeperGnome/bt/internal/tree"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/LeperGnome/bubbletea"
 	"os"
 	"os/exec"
 )
