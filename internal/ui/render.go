@@ -126,7 +126,7 @@ func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) 
 		contentLines = contentLines[:max(min(winHeight, len(contentLines)), 0)]
 	}
 	renderedStyledTree = lipgloss.JoinHorizontal(
-		0,
+		lipgloss.Top,
 		renderedStyledTree,
 		contentStyle.Render(strings.Join(contentLines, "\n")),
 	)

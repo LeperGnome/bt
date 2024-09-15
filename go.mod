@@ -26,5 +26,5 @@ require (
 	golang.org/x/text v0.3.8 // indirect
 )
 
-// replace github.com/charmbracelet/bubbletea => github.com/LeperGnome/bubbletea v1.1.2
+// replace github.com/LeperGnome/bubbletea => github.com/charmbracelet/bubbletea v1.0.0
 // replace github.com/LeperGnome/bubbletea => ../bubbletea

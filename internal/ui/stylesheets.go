@@ -44,9 +44,14 @@ var DefaultStylesheet = Stylesheet{
 	TreeMarkedNode: lipgloss.NewStyle().
 		BorderLeft(true).
 		BorderStyle(lipgloss.InnerHalfBlockBorder()).
-		Background(lipgloss.Color("#2b2b2b")),
+		Background(lipgloss.Color("#363636")),
 	TreeSelectionArrow: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
-	TreeIndent:         lipgloss.NewStyle().Foreground(lipgloss.Color("#2b2b2b")),
+	TreeIndent:         lipgloss.NewStyle().Foreground(lipgloss.Color("#363636")),
 
-	ContentPreview: lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("#B8BCD6")),
+	ContentPreview: lipgloss.NewStyle().
+		Italic(true).
+		Foreground(lipgloss.Color("#a8a8a8")).
+		BorderForeground(lipgloss.Color("#363636")).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderLeft(true),
 }
