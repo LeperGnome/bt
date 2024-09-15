@@ -16,30 +16,53 @@ import (
 )
 
 const (
-	previewBytesLimit   int64 = 10_000
-	minHeight                 = 10
-	minWidth                  = 10
-	indentParent              = "│  "
-	indentCurrent             = "├─ "
-	indentCurrentLast         = "└─ "
-	indentEmpty               = "   "
-	emptydirContentName       = "..."
+	previewBytesLimit int64 = 10_000
+
+	minHeight = 10
+	minWidth  = 10
+
+	arrow               = " <-"
+	indentParent        = "│  "
+	indentCurrent       = "├─ "
+	indentCurrentLast   = "└─ "
+	indentEmpty         = "   "
+	emptydirContentName = "..."
+
+	tooSmall                 = "too small =("
+	binaryContentPlaceholder = "<binary content>"
 )
 
 type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
 	offsetMem   int
+	previewBuff [previewBytesLimit]byte
 }
 
 func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
-	renderedHeading, headLen := r.renderHeading(s)
-	renderedTree := r.renderTreeWithContent(s.Tree, winHeight-headLen, winWidth)
+	if winWidth < minWidth || winHeight < minHeight {
+		return tooSmall
+	}
 
-	return renderedHeading + "\n" + renderedTree
+	renderedHeading, headLen := r.renderHeading(s, winWidth)
+
+	// section is half a screen, devided vertically
+	// left for tree, right for file preview
+	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
+
+	renderedTree := r.renderTree(s.Tree, winHeight-headLen, sectionWidth)
+	renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen, sectionWidth)
+
+	renderedTreeWithContent := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		renderedTree,
+		renderedContent,
+	)
+
+	return renderedHeading + "\n" + renderedTreeWithContent
 }
 
-func (r *Renderer) renderHeading(s *state.State) (string, int) {
+func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	selected := s.Tree.GetSelectedChild()
 
 	// NOTE: special case for empty dir
@@ -69,94 +92,89 @@ func (r *Renderer) renderHeading(s *state.State) (string, int) {
 		operationBar += fmt.Sprintf(" │ %s │", r.Style.OperationBarInput.Render(string(s.InputBuf)))
 	}
 
+	rawPath := "> " + path
+	// TODO: add actual help
+	helpPreview := "Press ? for help"
+
+	finfo := fmt.Sprintf(
+		"%s %s %v %s %s",
+		r.Style.FinfoPermissions.Render(perm),
+		r.Style.FinfoSep.Render("│"),
+		r.Style.FinfoLastUpdated.Render(changeTime),
+		r.Style.FinfoSep.Render("│"),
+		r.Style.FinfoSize.Render(size),
+	)
+
 	header := []string{
-		r.Style.SelectedPath.Render("> " + path),
-		fmt.Sprintf(
-			"%s %s %v %s %s",
-			r.Style.FinfoPermissions.Render(perm),
-			r.Style.FinfoSep.Render("│"),
-			r.Style.FinfoLastUpdated.Render(changeTime),
-			r.Style.FinfoSep.Render("│"),
-			r.Style.FinfoSize.Render(size),
-		),
+		r.Style.SelectedPath.Render(rawPath) +
+			strings.Repeat(
+				" ",
+				max(width-utf8.RuneCountInString(rawPath)-utf8.RuneCountInString(helpPreview), 0),
+			) +
+			r.Style.Help.Render(helpPreview),
+		finfo,
 		r.Style.OperationBar.Render(operationBar),
 		r.Style.ErrBar.Render(s.ErrBuf),
 	}
 	return strings.Join(header, "\n"), len(header)
 }
 
-func (r *Renderer) renderTreeWithContent(tree *t.Tree, winHeight, winWidth int) string {
-	if winWidth < minWidth || winHeight < minHeight {
-		return "too small =(\n"
-	}
-
-	// section is half a screen, devided vertically
-	// left for tree, right for file preview
-	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
-
+func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
 	// rendering tree
-	renderedTree, selectedRow := r.renderTree(tree, sectionWidth)
-	croppedTree := r.cropTree(renderedTree, selectedRow, winHeight)
+	renderedTreeLines, selectedRow := r.renderTreeFull(tree, width)
+	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, height)
 
 	treeStyle := lipgloss.
 		NewStyle().
-		MaxWidth(sectionWidth)
-	renderedStyledTree := treeStyle.Render(strings.Join(croppedTree, "\n"))
+		MarginRight(width).
+		MaxWidth(width)
 
+	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
+}
+
+func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
 	// rendering file content
-	content := make([]byte, previewBytesLimit)
-	n, err := tree.ReadSelectedChildContent(content, previewBytesLimit)
+	n, err := tree.ReadSelectedChildContent(r.previewBuff[:], previewBytesLimit)
 	if err != nil {
-		return renderedStyledTree
+		return ""
 	}
-	content = content[:n]
+	content := r.previewBuff[:n]
 
-	leftMargin := sectionWidth - lipgloss.Width(renderedStyledTree)
-	contentStyle := r.Style.ContentPreview.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderLeft(true).
-		MarginLeft(leftMargin).
-		MaxWidth(sectionWidth + leftMargin - 1)
+	contentStyle := r.Style.ContentPreview.MaxWidth(width - 1) // -1 for border...
 
 	var contentLines []string
 	if !utf8.Valid(content) {
-		contentLines = []string{"<binary content>"}
+		contentLines = []string{binaryContentPlaceholder}
 	} else {
 		contentLines = strings.Split(string(content), "\n")
-		contentLines = contentLines[:max(min(winHeight, len(contentLines)), 0)]
+		contentLines = contentLines[:max(min(height, len(contentLines)), 0)]
 	}
-	renderedStyledTree = lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		renderedStyledTree,
-		contentStyle.Render(strings.Join(contentLines, "\n")),
-	)
-	return renderedStyledTree
+	return contentStyle.Render(strings.Join(contentLines, "\n"))
 }
 
 // Crops tree lines, such that current line is visible and view is consistent.
-func (r *Renderer) cropTree(lines []string, currentLine int, windowHeight int) []string {
+func (r *Renderer) cropTree(lines []string, currentLine int, height int) []string {
 	linesLen := len(lines)
 
 	// determining offset and limit based on selected row
 	offset := r.offsetMem
 	limit := linesLen
-	if windowHeight > 0 {
-		// cursor is out for 'top' boundary
-		if currentLine+1 > windowHeight+offset-r.EdgePadding {
-			offset = max(min(currentLine+1-windowHeight+r.EdgePadding, linesLen-windowHeight), 0)
-		}
-		// cursor is out for 'bottom' boundary
-		if currentLine < r.EdgePadding+offset {
-			offset = max(currentLine-r.EdgePadding, 0)
-		}
-		r.offsetMem = offset
-		limit = min(windowHeight+offset, linesLen)
+
+	// cursor is out for 'top' boundary
+	if currentLine+1 > height+offset-r.EdgePadding {
+		offset = max(min(currentLine+1-height+r.EdgePadding, linesLen-height), 0)
 	}
+	// cursor is out for 'bottom' boundary
+	if currentLine < r.EdgePadding+offset {
+		offset = max(currentLine-r.EdgePadding, 0)
+	}
+	r.offsetMem = offset
+	limit = min(height+offset, linesLen)
 	return lines[offset:limit]
 }
 
 // Returns lines as slice and index of selected line.
-func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
+func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 	linen := -1
 	currentLine := 0
 
@@ -195,8 +213,8 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		nameRuneCountNoStyle := utf8.RuneCountInString(name)
 		indentRuneCount := utf8.RuneCountInString(indent)
 
-		if nameRuneCountNoStyle+indentRuneCount > widthLim-6 { // 6 = len([]rune{"... <-"})
-			name = string([]rune(name)[:max(0, widthLim-indentRuneCount-6)]) + "..."
+		if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
+			name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
 		}
 
 		indent = r.Style.TreeIndent.Render(indent)
@@ -216,7 +234,7 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 		repr := indent + name
 
 		if tree.GetSelectedChild() == node {
-			repr += r.Style.TreeSelectionArrow.Render(" <-")
+			repr += r.Style.TreeSelectionArrow.Render(arrow)
 			currentLine = linen
 		}
 		lines = append(lines, repr)
@@ -225,7 +243,7 @@ func (r *Renderer) renderTree(tree *t.Tree, widthLim int) ([]string, int) {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
 				emptyIndent := r.Style.TreeIndent.Render(parentIndent + indentCurrentLast)
-				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(" <-"))
+				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(arrow))
 				currentLine = linen + 1
 			}
 			for i := len(node.Children) - 1; i >= 0; i-- {

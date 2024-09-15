@@ -83,6 +83,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] File permission in status bar
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
+- [ ] Help
 - [ ] Mark multiple files
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
