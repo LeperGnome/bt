@@ -14,7 +14,9 @@ type Stylesheet struct {
 	OperationBarInput lipgloss.Style
 
 	ErrBar lipgloss.Style
-	Help   lipgloss.Style
+
+	HelpMsg     lipgloss.Style
+	HelpContent lipgloss.Style
 
 	TreeRegularFileName lipgloss.Style
 	TreeDirecotryName   lipgloss.Style
@@ -37,8 +39,14 @@ var DefaultStylesheet = Stylesheet{
 	OperationBar:      lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	OperationBarInput: lipgloss.NewStyle().Background(lipgloss.Color("#3C3C3C")),
 
-	ErrBar: lipgloss.NewStyle().Foreground(lipgloss.Color("#AC6D74")),
-	Help:   lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
+	ErrBar:  lipgloss.NewStyle().Foreground(lipgloss.Color("#AC6D74")),
+	HelpMsg: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
+	HelpContent: lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#8c7ca6")).
+		BorderForeground(lipgloss.Color("#8c7ca6")).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderBottom(true).
+		BorderLeft(true),
 
 	TreeRegularFileName: lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	TreeDirecotryName:   lipgloss.NewStyle().Foreground(lipgloss.Color("#6D74AC")),

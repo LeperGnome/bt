@@ -49,6 +49,7 @@ type State struct {
 	InputBuf    []rune
 	ErrBuf      string
 	NodeChanges <-chan t.NodeChange
+	HelpToggle  bool
 }
 
 func InitState(root string) (*State, error) {
@@ -266,6 +267,8 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if child != nil && child.Info.Mode().IsRegular() {
 			return openEditor(child.Path)
 		}
+	case "?":
+		s.HelpToggle = !s.HelpToggle
 	case "enter":
 		err := s.Tree.CollapseOrExpandSelected()
 		if err != nil {

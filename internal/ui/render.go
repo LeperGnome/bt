@@ -30,6 +30,7 @@ const (
 
 	tooSmall                 = "too small =("
 	binaryContentPlaceholder = "<binary content>"
+	helpPreview              = "Press ? to toggle help"
 )
 
 type Renderer struct {
@@ -51,12 +52,22 @@ func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
 	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
 
 	renderedTree := r.renderTree(s.Tree, winHeight-headLen, sectionWidth)
-	renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen, sectionWidth)
+
+	var rightPane string
+
+	if s.HelpToggle {
+		renderedHelp, helpLen := r.renderHelp(sectionWidth)
+		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen-helpLen, sectionWidth)
+		rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
+	} else {
+		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen, sectionWidth)
+		rightPane = renderedContent
+	}
 
 	renderedTreeWithContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		renderedTree,
-		renderedContent,
+		rightPane,
 	)
 
 	return renderedHeading + "\n" + renderedTreeWithContent
@@ -93,8 +104,6 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	}
 
 	rawPath := "> " + path
-	// TODO: add actual help
-	helpPreview := "Press ? for help"
 
 	finfo := fmt.Sprintf(
 		"%s %s %v %s %s",
@@ -111,7 +120,7 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 				" ",
 				max(width-utf8.RuneCountInString(rawPath)-utf8.RuneCountInString(helpPreview), 0),
 			) +
-			r.Style.Help.Render(helpPreview),
+			r.Style.HelpMsg.Render(helpPreview),
 		finfo,
 		r.Style.OperationBar.Render(operationBar),
 		r.Style.ErrBar.Render(s.ErrBuf),
@@ -119,21 +128,44 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	return strings.Join(header, "\n"), len(header)
 }
 
+func (r *Renderer) renderHelp(width int) (string, int) {
+	help := []string{
+		"j / arr down   Select next child",
+		"k / arr up     Select previous child",
+		"h / arr left   Move up a dir",
+		"l / arr right  Enter selected directory",
+		"if / id	    Create file (if) / directory (id) in current directory",
+		"d              Move selected child (then 'p' to paste)",
+		"y              Copy selected child (then 'p' to paste)",
+		"D              Delete selected child",
+		"r              Rename selected child",
+		"e              Edit selected file in $EDITOR",
+		"gg             Go to top most child in current directory",
+		"G              Go to last child in current directory",
+		"enter          Collapse / expand selected directory",
+		"esc            Clear error message / stop current operation",
+		"q / ctrl+c     Exit",
+	}
+	return r.Style.
+		HelpContent.
+		MaxWidth(width).
+		MarginRight(width).
+		Render(strings.Join(help, "\n")), len(help) + 1 // +1 for border
+}
+
 func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
-	// rendering tree
 	renderedTreeLines, selectedRow := r.renderTreeFull(tree, width)
 	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, height)
 
 	treeStyle := lipgloss.
 		NewStyle().
-		MarginRight(width).
-		MaxWidth(width)
+		MaxWidth(width).
+		MarginRight(width)
 
 	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
 }
 
 func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
-	// rendering file content
 	n, err := tree.ReadSelectedChildContent(r.previewBuff[:], previewBytesLimit)
 	if err != nil {
 		return ""

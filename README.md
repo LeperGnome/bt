@@ -45,6 +45,7 @@ Key bindings:
 | G             | Go to last child in current directory                  |
 | enter         | Collapse / expand selected directory                   |
 | esc           | Clear error message / stop current operation           |
+| ?             | Toggle help                                            |
 | q / ctrl+c    | Exit                                                   |
 
 ## Motivation
@@ -83,7 +84,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] File permission in status bar
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
-- [ ] Help
+- [x] Help
 - [ ] Mark multiple files
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
