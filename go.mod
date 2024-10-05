@@ -3,7 +3,7 @@ module github.com/LeperGnome/bt
 go 1.22.2
 
 require (
-	github.com/LeperGnome/bubbletea v1.1.4
+	github.com/LeperGnome/bubbletea v1.1.5
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/fsnotify/fsnotify v1.7.0
 )

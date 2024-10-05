@@ -1,5 +1,5 @@
-github.com/LeperGnome/bubbletea v1.1.4 h1:cCLs27cfiuI3U/zzra1Sfe/NxGypym/PAdN0+lHtw0Q=
-github.com/LeperGnome/bubbletea v1.1.4/go.mod h1:phCh9BfYd40Ca7ifjfgmtKsYQizbR5CBAYVYmB5Q59Q=
+github.com/LeperGnome/bubbletea v1.1.5 h1:JoQdVW9wyr8hwBBcR4oqdjsjmx6MKkWYTQwrLlwvZEU=
+github.com/LeperGnome/bubbletea v1.1.5/go.mod h1:phCh9BfYd40Ca7ifjfgmtKsYQizbR5CBAYVYmB5Q59Q=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/charmbracelet/lipgloss v0.13.0 h1:4X3PPeoWEDCMvzDvGmTajSyYPcZM4+y8sCA/SsA3cjw=
