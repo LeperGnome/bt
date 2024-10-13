@@ -2,7 +2,7 @@
 
 Manipulate file tree in terminal.
 
-![Preview](assets/preview.gif)
+<img alt="Preview" src="assets/preview.gif" width="600" />
 
 ## Installation
 
