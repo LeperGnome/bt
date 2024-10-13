@@ -2,12 +2,12 @@
 
 Manipulate file tree in terminal.
 
-![Usage screenshot](assets/bt-usage.png)
+![Preview](assets/preview.gif)
 
 ## Installation
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@latest
+go install github.com/LeperGnome/bt/cmd/bt@1.0.0
 ```
 
 Or from source
