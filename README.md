@@ -7,7 +7,7 @@ Manipulate file tree in terminal.
 ## Installation
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@1.0.0
+go install github.com/LeperGnome/bt/cmd/bt@v1.0.0
 ```
 
 Or from source
