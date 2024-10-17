@@ -61,6 +61,7 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 
 ## TODO
 ```
+Functional:
 - [x] Tree rendering
 - [x] File preview
 - [x] Scrolling trees, that don't fit the screen
@@ -80,15 +81,22 @@ That's why I'm writing my own simple tool for simple use cases. It's currently l
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
 - [x] Help
+- [ ] Image preview
+- [ ] Custom delete cmd
 - [ ] Mark multiple files
+- [ ] Search
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
 - [ ] Go higher then local root
 - [ ] Make current directory a local root
 
-- [ ] Sorting function as a flag?
-- [ ] Search?
+Fixes:
+- [ ] Fix size notation
+- [ ] File preview ignore control chars
 
-- [~] Project structure (kinda)
+Maintenance:
+- [ ] Release artifacts
 - [ ] Tests
+- [ ] CI
+- [ ] Distribution
 ```
