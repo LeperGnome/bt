@@ -99,4 +99,5 @@ Maintenance:
 - [ ] Tests
 - [ ] CI
 - [ ] Distribution
+- [ ] CONTRIBUTING.md
 ```

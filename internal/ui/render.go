@@ -287,7 +287,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 	return lines, currentLine
 }
 
-var sizes = [...]string{"b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"}
+var sizes = [...]string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
 
 func formatSize(s float64, base float64) string {
 	unitsLimit := len(sizes)
