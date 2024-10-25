@@ -82,6 +82,7 @@ Functional:
 - [x] Edit selected file in editor of choice
 - [x] Help
 - [ ] Image preview
+- [ ] Custom opening files
 - [ ] Custom delete cmd
 - [ ] Mark multiple files
 - [ ] Search
@@ -91,7 +92,7 @@ Functional:
 - [ ] Make current directory a local root
 
 Fixes:
-- [ ] Fix size notation
+- [x] Fix size notation
 - [ ] File preview ignore control chars
 
 Maintenance:
