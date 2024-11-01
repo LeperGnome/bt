@@ -81,6 +81,7 @@ Functional:
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
 - [x] Help
+- [ ] Toggle hidden directories
 - [ ] Image preview
 - [ ] Custom opening files
 - [ ] Custom delete cmd
