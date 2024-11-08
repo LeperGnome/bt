@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/LeperGnome/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/LeperGnome/bt/internal/state"
 	"github.com/LeperGnome/bt/internal/tree"
