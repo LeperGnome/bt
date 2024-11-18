@@ -142,6 +142,7 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		"e              Edit selected file in $EDITOR",
 		"gg             Go to top most child in current directory",
 		"G              Go to last child in current directory",
+		"H              Toggle hidden files in current directory",
 		"enter          Collapse / expand selected directory",
 		"esc            Clear error message / stop current operation",
 		"q / ctrl+c     Exit",
