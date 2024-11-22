@@ -27,6 +27,10 @@ func (t *Tree) GetSelectedChild() *Node {
 	}
 	return nil
 }
+func (t *Tree) ToggleHiddenInCurrentDirectory() error {
+	t.CurrentDir.showHidden = !t.CurrentDir.showHidden
+	return t.CurrentDir.readChildren(defaultNodeSorting)
+}
 func (t *Tree) RefreshNodeParentByPath(path string) error {
 	// I'm assuming, that all paths are relative to my tree root
 	parentDir := filepath.Dir(path)
@@ -208,12 +212,7 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange
 		sortingFunc = defaultNodeSorting
 	}
 
-	root := &Node{
-		Path:     dir,
-		Info:     rootInfo,
-		Parent:   nil,
-		Children: []*Node{},
-	}
+	root := NewNode(dir, rootInfo, nil)
 
 	err = root.readChildren(sortingFunc)
 	if err != nil {
