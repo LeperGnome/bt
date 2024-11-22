@@ -26,6 +26,9 @@ func (n *Node) SelectLast() {
 		n.selectedChildIdx = len(n.Children) - 1
 	}
 }
+func (n *Node) ShowsHidden() bool {
+	return n.showHidden
+}
 func (n *Node) SelectFirst() {
 	n.selectedChildIdx = 0
 }

@@ -266,6 +266,10 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 
 		repr := indent + name
 
+		if !node.ShowsHidden() && node.Info.IsDir() {
+			repr += "◦"
+		}
+
 		if tree.GetSelectedChild() == node {
 			repr += r.Style.TreeSelectionArrow.Render(arrow)
 			currentLine = linen
