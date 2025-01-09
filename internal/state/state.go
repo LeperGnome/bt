@@ -267,6 +267,10 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if child != nil && child.Info.Mode().IsRegular() {
 			return openEditor(child.Path)
 		}
+	case "H":
+		if err := s.Tree.ToggleHiddenInCurrentDirectory(); err != nil {
+			s.ErrBuf = err.Error()
+		}
 	case "?":
 		s.HelpToggle = !s.HelpToggle
 	case "enter":

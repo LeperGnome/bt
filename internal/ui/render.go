@@ -142,6 +142,7 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		"e              Edit selected file in $EDITOR",
 		"gg             Go to top most child in current directory",
 		"G              Go to last child in current directory",
+		"H              Toggle hidden files in current directory",
 		"enter          Collapse / expand selected directory",
 		"esc            Clear error message / stop current operation",
 		"q / ctrl+c     Exit",
@@ -264,6 +265,10 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		}
 
 		repr := indent + name
+
+		if !node.ShowsHidden() && node.Info.IsDir() {
+			repr += "◦"
+		}
 
 		if tree.GetSelectedChild() == node {
 			repr += r.Style.TreeSelectionArrow.Render(arrow)

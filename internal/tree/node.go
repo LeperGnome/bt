@@ -11,11 +11,13 @@ import (
 type NodeSortingFunc func(a, b *Node) int
 
 type Node struct {
-	Path             string
-	Info             fs.FileInfo
-	Children         []*Node // nil - not read or it's a file
-	Parent           *Node
+	Path     string
+	Info     fs.FileInfo
+	Children []*Node // nil - not read or it's a file
+	Parent   *Node
+
 	selectedChildIdx int
+	showHidden       bool
 }
 
 func (n *Node) SelectLast() {
@@ -23,6 +25,9 @@ func (n *Node) SelectLast() {
 	if n.Children != nil && len(n.Children) > 0 {
 		n.selectedChildIdx = len(n.Children) - 1
 	}
+}
+func (n *Node) ShowsHidden() bool {
+	return n.showHidden
 }
 func (n *Node) SelectFirst() {
 	n.selectedChildIdx = 0
@@ -43,6 +48,10 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 		if err != nil {
 			return err
 		}
+		// Skipping hidden node
+		if !n.showHidden && strings.HasPrefix(chInfo.Name(), ".") {
+			continue
+		}
 		// Looking if child already exist
 		var childToAdd *Node
 		if n.Children != nil {
@@ -54,12 +63,11 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 			}
 		}
 		if childToAdd == nil {
-			childToAdd = &Node{
-				Path:     filepath.Join(n.Path, chInfo.Name()),
-				Info:     chInfo,
-				Children: nil,
-				Parent:   n,
-			}
+			childToAdd = NewNode(
+				filepath.Join(n.Path, chInfo.Name()),
+				chInfo,
+				n,
+			)
 		}
 		chNodes = append(chNodes, childToAdd)
 	}
@@ -72,6 +80,16 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 }
 func (n *Node) orphanChildren() {
 	n.Children = nil
+}
+
+func NewNode(path string, info fs.FileInfo, parent *Node) *Node {
+	return &Node{
+		Path:       path,
+		Info:       info,
+		Children:   nil,
+		Parent:     parent,
+		showHidden: true,
+	}
 }
 
 func defaultNodeSorting(a, b *Node) int {
