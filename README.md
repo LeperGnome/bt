@@ -6,6 +6,8 @@ Manipulate file tree in terminal.
 
 ## Installation
 
+`bt` is currently only supported on linux and macOS. Windows support is on todo list.
+
 ```bash
 go install github.com/LeperGnome/bt/cmd/bt@v1.0.0
 ```
@@ -92,6 +94,7 @@ Functional:
 - [ ] Jump to current directory
 - [ ] Go higher then local root
 - [ ] Make current directory a local root
+- [ ] Windows support
 
 Fixes:
 - [x] Fix size notation
