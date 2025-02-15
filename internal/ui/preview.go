@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -11,7 +12,10 @@ import (
 
 type PreviewFunc = func(node *t.Node, height, width int, style Stylesheet) string
 
-const kittyClearMedia = "\033_Ga=d\033\\"
+const (
+	kittyClearMedia = "\033_Ga=d\033\\"
+	tgpChunkSize    = 2048
+)
 
 func GetPreview(node *t.Node, height, width int, style Stylesheet) string {
 	parts := strings.Split(node.Info.Name(), ".")
@@ -33,8 +37,56 @@ func getPreviewFunc(fileType string) PreviewFunc {
 }
 
 func tgpPreviewPNG(node *t.Node, height, width int, style Stylesheet) string {
-	path64 := base64.StdEncoding.EncodeToString([]byte(node.Path))
-	return fmt.Sprintf("\033_Ga=T,t=f,C=1,f=100;%s\033\\", path64)
+	preview, err := tgpDirectChunks(node.Path)
+	if err != nil {
+		return err.Error()
+	}
+	return preview
+}
+
+func tgpDirectChunks(path string) (string, error) {
+	res := []string{}
+	data, err := os.ReadFile(path) // TODO
+	if err != nil {
+		return "", err
+	}
+	data64 := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+	base64.StdEncoding.Encode(data64, data)
+
+	chunk := 0
+
+	for {
+		if chunk == 0 && (chunk+1)*tgpChunkSize < len(data64) {
+			chunkData := fmt.Sprintf(
+				"\033_Ga=T,C=1,f=100,m=1;%s\033\\",
+				string(data64[chunk*tgpChunkSize:(chunk+1)*tgpChunkSize]),
+			)
+			res = append(res, chunkData)
+		} else if (chunk+1)*tgpChunkSize < len(data64) {
+			chunkData := fmt.Sprintf(
+				"\033_Gm=1;%s\033\\",
+				string(data64[chunk*tgpChunkSize:(chunk+1)*tgpChunkSize]),
+			)
+			res = append(res, chunkData)
+		} else if chunk == 0 {
+			chunkData := fmt.Sprintf(
+				"\033_Ga=T,C=1,f=100;%s\033\\",
+				string(data64),
+			)
+			res = append(res, chunkData)
+			break
+		} else {
+			chunkData := fmt.Sprintf(
+				"\033_Gm=0;%s\033\\",
+				string(data64[chunk*tgpChunkSize:]),
+			)
+			res = append(res, chunkData)
+			break
+		}
+		chunk++
+	}
+
+	return strings.Join(res, ""), nil
 }
 
 func plainTextPreview(node *t.Node, height, width int, style Stylesheet) string {
