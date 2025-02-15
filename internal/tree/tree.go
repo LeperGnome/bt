@@ -2,7 +2,6 @@ package tree
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,9 +13,10 @@ import (
 )
 
 type Tree struct {
-	Root        *Node
-	CurrentDir  *Node
-	Marked      *Node
+	Root       *Node
+	CurrentDir *Node
+	Marked     *Node
+
 	sortingFunc NodeSortingFunc
 	watcher     *fsnotify.Watcher
 }
@@ -66,23 +66,6 @@ func (t *Tree) CreateFileInCurrent(name string) error {
 }
 func (t *Tree) CreateDirectoryInCurrent(name string) error {
 	return os.Mkdir(filepath.Join(t.CurrentDir.Path, name), os.ModePerm)
-}
-func (t *Tree) ReadSelectedChildContent(buf []byte, limit int64) (int, error) {
-	selectedNode := t.GetSelectedChild()
-	if selectedNode == nil || !selectedNode.Info.Mode().IsRegular() {
-		return 0, fmt.Errorf("file not selected or is irregular")
-	}
-	f, err := os.Open(selectedNode.Path)
-	defer f.Close()
-	if err != nil {
-		return 0, err
-	}
-	limitedReader := io.LimitReader(f, limit)
-	n, err := limitedReader.Read(buf)
-	if err != nil {
-		return 0, err
-	}
-	return n, nil
 }
 func (t *Tree) SelectNextChild() {
 	if t.CurrentDir.selectedChildIdx < len(t.CurrentDir.Children)-1 {
@@ -201,6 +184,10 @@ func (t *Tree) CollapseOrExpandSelected() error {
 }
 
 func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange, error) {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, nil, err
+	}
 	rootInfo, err := os.Lstat(dir)
 	if err != nil {
 		return nil, nil, err

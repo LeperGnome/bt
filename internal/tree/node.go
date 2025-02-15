@@ -1,6 +1,8 @@
 package tree
 
 import (
+	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -80,6 +82,22 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 }
 func (n *Node) orphanChildren() {
 	n.Children = nil
+}
+func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
+	if !n.Info.Mode().IsRegular() {
+		return 0, fmt.Errorf("file not selected or is irregular")
+	}
+	f, err := os.Open(n.Path)
+	defer f.Close()
+	if err != nil {
+		return 0, err
+	}
+	limitedReader := io.LimitReader(f, limit)
+	k, err := limitedReader.Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	return k, nil
 }
 
 func NewNode(path string, info fs.FileInfo, parent *Node) *Node {

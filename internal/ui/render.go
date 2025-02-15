@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	previewBytesLimit int64 = 10_000
+	previewTextBytesLimit  int64 = 10_000
+	previewMediaBytesLimit int64 = 1_000_000
 
 	minHeight = 10
 	minWidth  = 10
@@ -37,7 +38,7 @@ type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
 	offsetMem   int
-	previewBuff [previewBytesLimit]byte
+	previewBuff [previewTextBytesLimit]byte // TODO: not needed?
 }
 
 func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
@@ -167,22 +168,11 @@ func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
 }
 
 func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
-	n, err := tree.ReadSelectedChildContent(r.previewBuff[:], previewBytesLimit)
-	if err != nil {
-		return ""
+	ch := tree.GetSelectedChild()
+	if ch == nil {
+		return "<no child>" // TODO
 	}
-	content := r.previewBuff[:n]
-
-	contentStyle := r.Style.ContentPreview.MaxWidth(width - 1) // -1 for border...
-
-	var contentLines []string
-	if !utf8.Valid(content) {
-		contentLines = []string{binaryContentPlaceholder}
-	} else {
-		contentLines = strings.Split(string(content), "\n")
-		contentLines = contentLines[:max(min(height, len(contentLines)), 0)]
-	}
-	return contentStyle.Render(strings.Join(contentLines, "\n"))
+	return GetPreview(ch, height, width, r.Style)
 }
 
 // Crops tree lines, such that current line is visible and view is consistent.
