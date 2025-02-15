@@ -3,7 +3,6 @@ package ui
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -37,19 +36,23 @@ func getPreviewFunc(fileType string) PreviewFunc {
 }
 
 func tgpPreviewPNG(node *t.Node, height, width int, style Stylesheet) string {
-	preview, err := tgpDirectChunks(node.Path)
+	buf := make([]byte, previewMediaBytesLimit)
+	n, err := node.ReadContent(buf, previewTextBytesLimit)
 	if err != nil {
 		return err.Error()
 	}
+	data := buf[:n]
+
+	preview, err := tgpDirectChunks(data)
+	if err != nil {
+		return err.Error()
+	}
+
 	return preview
 }
 
-func tgpDirectChunks(path string) (string, error) {
+func tgpDirectChunks(data []byte) (string, error) {
 	res := []string{}
-	data, err := os.ReadFile(path) // TODO
-	if err != nil {
-		return "", err
-	}
 	data64 := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
 	base64.StdEncoding.Encode(data64, data)
 
@@ -90,10 +93,10 @@ func tgpDirectChunks(path string) (string, error) {
 }
 
 func plainTextPreview(node *t.Node, height, width int, style Stylesheet) string {
-	buf := make([]byte, previewTextBytesLimit) // TODO: fixed size buffer?
+	buf := make([]byte, previewTextBytesLimit)
 	n, err := node.ReadContent(buf, previewTextBytesLimit)
 	if err != nil {
-		return ""
+		return err.Error()
 	}
 	content := buf[:n]
 
