@@ -83,7 +83,8 @@ Functional:
 - [x] Edit selected file in editor of choice
 - [x] Help
 - [x] Toggle hidden directories
-- [ ] Image preview
+- [x] Image preview (half-block only)
+- [ ] Image preview TGP
 - [ ] Custom opening files
 - [ ] Custom delete cmd
 - [ ] Mark multiple files
