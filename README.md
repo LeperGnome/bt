@@ -84,8 +84,9 @@ Functional:
 - [x] Stylesheets
 - [x] Edit selected file in editor of choice
 - [x] Help
-- [ ] Toggle hidden directories
-- [ ] Image preview
+- [x] Toggle hidden directories
+- [x] Image preview (half-block only)
+- [ ] Image preview TGP
 - [ ] Custom opening files
 - [ ] Custom delete cmd
 - [ ] Mark multiple files

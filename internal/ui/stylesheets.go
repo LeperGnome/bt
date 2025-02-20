@@ -25,7 +25,7 @@ type Stylesheet struct {
 	TreeSelectionArrow  lipgloss.Style
 	TreeIndent          lipgloss.Style
 
-	ContentPreview lipgloss.Style
+	PlainTextPreview lipgloss.Style
 }
 
 var DefaultStylesheet = Stylesheet{
@@ -58,7 +58,7 @@ var DefaultStylesheet = Stylesheet{
 	TreeSelectionArrow: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
 	TreeIndent:         lipgloss.NewStyle().Foreground(lipgloss.Color("#363636")),
 
-	ContentPreview: lipgloss.NewStyle().
+	PlainTextPreview: lipgloss.NewStyle().
 		Italic(true).
 		Foreground(lipgloss.Color("#a8a8a8")).
 		BorderForeground(lipgloss.Color("#363636")).
