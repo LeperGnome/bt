@@ -27,32 +27,34 @@ func GetPreview(node *t.Node, height, width int, style Stylesheet) string {
 	f := getPreviewFunc(ext)
 
 	preview := f(node, height, width, style)
-	return kittyClearMedia + preview // TODO: my abstractions suck
+	// return kittyClearMedia + preview // TODO
+	return preview
 }
 
 func getPreviewFunc(fileType string) PreviewFunc {
 	switch fileType {
-	case "png":
-		return tgpPreviewPNG // TODO: have to use it only in kitty / ghostty ...
-	case "jpg", "jpeg":
-		return halfBlockPreview // TODO: have to use it only in kitty / ghostty ...
+	// case "png":
+	//  return tgpPreviewPNG // TODO: have to use it only in kitty / ghostty ...
+	case "png", "jpg", "jpeg":
+		return halfBlockPreview
 	default:
 		return plainTextPreview
 	}
-
 }
 
-func tgpPreviewPNG(node *t.Node, height, width int, style Stylesheet) string {
-	preview, err := tgpDirectChunks(node.Path)
+// TODO: experimental
+func tgpPreviewPNG(node *t.Node, height, width int, _ Stylesheet) string {
+	preview, err := tgpDirectChunks(node.Path, height, width)
 	if err != nil {
 		return err.Error()
 	}
 	return preview
 }
 
-func tgpDirectChunks(path string) (string, error) {
+// TODO: experimental
+func tgpDirectChunks(path string, height, width int) (string, error) {
 	res := []string{}
-	data, err := os.ReadFile(path) // TODO
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -64,7 +66,8 @@ func tgpDirectChunks(path string) (string, error) {
 	for {
 		if chunk == 0 && (chunk+1)*tgpChunkSize < len(data64) {
 			chunkData := fmt.Sprintf(
-				"\033_Ga=T,C=1,f=100,m=1;%s\033\\",
+				"\033_Ga=T,C=1,f=100,r=%d,c=%d,m=1;%s\033\\",
+				height-1, width-1,
 				string(data64[chunk*tgpChunkSize:(chunk+1)*tgpChunkSize]),
 			)
 			res = append(res, chunkData)
@@ -182,7 +185,7 @@ func imageHalfBlockRepr(path string, height, width int) string {
 }
 
 func plainTextPreview(node *t.Node, height, width int, style Stylesheet) string {
-	buf := make([]byte, previewTextBytesLimit) // TODO: fixed size buffer?
+	buf := make([]byte, previewTextBytesLimit)
 	n, err := node.ReadContent(buf, previewTextBytesLimit)
 	if err != nil {
 		return ""

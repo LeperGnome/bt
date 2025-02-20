@@ -184,10 +184,6 @@ func (t *Tree) CollapseOrExpandSelected() error {
 }
 
 func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange, error) {
-	dir, err := filepath.Abs(dir)
-	if err != nil {
-		return nil, nil, err
-	}
 	rootInfo, err := os.Lstat(dir)
 	if err != nil {
 		return nil, nil, err
