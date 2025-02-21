@@ -46,7 +46,7 @@ Key bindings:
 | gg            | Go to top most child in current directory              |
 | G             | Go to last child in current directory                  |
 | H             | Toggle hidden files in current directory               |
-| enter         | Collapse / expand selected directory                   |
+| enter         | Open selected directory or file (xdg-open)             |
 | esc           | Clear error message / stop current operation           |
 | ?             | Toggle help                                            |
 | q / ctrl+c    | Exit                                                   |
@@ -86,8 +86,8 @@ Functional:
 - [x] Help
 - [x] Toggle hidden directories
 - [x] Image preview (half-block only)
+- [x] xdg-open files
 - [ ] Image preview TGP
-- [ ] Custom opening files
 - [ ] Custom delete cmd
 - [ ] Mark multiple files
 - [ ] Search
