@@ -274,9 +274,14 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "?":
 		s.HelpToggle = !s.HelpToggle
 	case "enter":
-		err := s.Tree.CollapseOrExpandSelected()
-		if err != nil {
-			s.ErrBuf = err.Error()
+		child := s.Tree.GetSelectedChild()
+		if child != nil && child.Info.Mode().IsRegular() {
+			return xdgOpenFile(child.Path)
+		} else {
+			err := s.Tree.CollapseOrExpandSelected()
+			if err != nil {
+				s.ErrBuf = err.Error()
+			}
 		}
 	}
 	return nil
@@ -288,6 +293,13 @@ func openEditor(path string) tea.Cmd {
 		editor = "vim"
 	}
 	c := exec.Command(editor, path)
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		return nil
+	})
+}
+
+func xdgOpenFile(path string) tea.Cmd {
+	c := exec.Command("xdg-open", path)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return nil
 	})
