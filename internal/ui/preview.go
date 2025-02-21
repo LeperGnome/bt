@@ -6,6 +6,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -99,53 +100,53 @@ func tgpDirectChunks(path string, height, width int) (string, error) {
 }
 
 func halfBlockPreview(node *t.Node, height, width int, style Stylesheet) string {
-	preview := imageHalfBlockRepr(node.Path, height, width)
+	f, err := os.Open(node.Path)
+	if err != nil {
+		return err.Error()
+	}
+	defer f.Close()
+	preview := imageHalfBlockRepr(f, height, width)
 	return preview
 }
 
-func imageHalfBlockRepr(path string, height, width int) string {
-	f, err := os.Open(path)
+func imageHalfBlockRepr(r io.Reader, heightSymbols, widthSymbols int) string {
+	img, _, err := image.Decode(r)
 	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	img, _, err := image.Decode(f)
-	if err != nil {
-		panic(err)
+		return err.Error()
 	}
 
-	height -= 1 // For bottom resolution output
-	height *= 2 // Due to most fonts w/h ratio.
+	heightHb := heightSymbols - 1 // For bottom resolution output
+	heightHb *= 2                 // Due to most fonts w/h ratio.
+	widthHb := widthSymbols
 
 	res := []string{}
 
 	pxWidth := img.Bounds().Max.X
 	pxHeight := img.Bounds().Max.Y
 
-	sectorWidthRatio := int(math.Ceil(float64(pxWidth) / float64(width)))
-	sectorHeightRatio := int(math.Ceil(float64(pxHeight) / float64(height)))
+	sectorWidthRatio := int(math.Ceil(float64(pxWidth) / float64(widthHb)))
+	sectorHeightRatio := int(math.Ceil(float64(pxHeight) / float64(heightHb)))
 
-	sectorSide := max(sectorWidthRatio, sectorHeightRatio)
+	sectorSizePx := max(sectorWidthRatio, sectorHeightRatio)
 
-	width = pxWidth / sectorSide
-	height = pxHeight / sectorSide
+	widthSectors := pxWidth / sectorSizePx
+	heightSectors := pxHeight / sectorSizePx
 
-	if height&1 == 1 {
-		height -= 1
+	if heightSectors&1 == 1 {
+		heightSectors -= 1
 	}
 
-	pxCnt := uint32(sectorSide * sectorSide)
+	pxCnt := uint32(sectorSizePx * sectorSizePx)
 
 	// loop through sectors
-	for sy := 0; sy < height; sy += 2 {
+	for sy := 0; sy < heightSectors; sy += 2 {
 		line := []string{}
-		for sx := range width {
+		for sx := range widthSectors {
 
 			// loop through pixels within sector
 			sums := [3]uint32{0, 0, 0}
-			for y := sy * sectorSide; y < (sy+1)*sectorSide; y++ {
-				for x := sx * (sectorSide); x < (sx+1)*sectorSide; x++ {
+			for y := sy * sectorSizePx; y < (sy+1)*sectorSizePx; y++ {
+				for x := sx * (sectorSizePx); x < (sx+1)*sectorSizePx; x++ {
 					c := img.At(x, y)
 					r, g, b, _ := c.RGBA()
 					sums[0] += r
@@ -156,8 +157,8 @@ func imageHalfBlockRepr(path string, height, width int) string {
 			meansTop := [3]uint32{sums[0] / pxCnt, sums[1] / pxCnt, sums[2] / pxCnt}
 
 			sums2 := [3]uint32{0, 0, 0}
-			for y := (sy + 1) * sectorSide; y < (sy+2)*sectorSide; y++ {
-				for x := sx * (sectorSide); x < (sx+1)*sectorSide; x++ {
+			for y := (sy + 1) * sectorSizePx; y < (sy+2)*sectorSizePx; y++ {
+				for x := sx * (sectorSizePx); x < (sx+1)*sectorSizePx; x++ {
 					c := img.At(x, y)
 					r, g, b, _ := c.RGBA()
 					sums2[0] += r
