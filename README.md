@@ -87,6 +87,7 @@ Functional:
 - [x] Toggle hidden directories
 - [x] Image preview (half-block only)
 - [x] xdg-open files
+- [ ] Async preview
 - [ ] Image preview TGP
 - [ ] Custom delete cmd
 - [ ] Mark multiple files

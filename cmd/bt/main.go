@@ -15,12 +15,16 @@ import (
 type model struct {
 	windowHeight int
 	windowWidth  int
-	appState     *state.State
-	renderer     *ui.Renderer
+
+	appState *state.State
+	renderer *ui.Renderer
 }
 
 func (m model) Init() tea.Cmd {
-	return listenFSEvents(m.appState.NodeChanges)
+	return tea.Batch(
+		listenFSEvents(m.appState.NodeChanges),
+		listenPreviewReady(m.renderer.PreviewChan),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -31,13 +35,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m, m.appState.ProcessKey(msg)
 	case tree.NodeChange:
+		m.renderer.RemovePreviewCache(msg.Path) // TODO: does not work, since file writes don't produce events here
 		m.appState.ProcessNodeChange(msg)
 		return m, listenFSEvents(m.appState.NodeChanges)
+	case ui.Preview:
+		m.renderer.SetPreviewCache(msg)
+		return m, listenPreviewReady(m.renderer.PreviewChan)
 	}
 	return m, nil
 }
 func (m model) View() string {
-	return m.renderer.Render(m.appState, m.windowHeight, m.windowWidth)
+	return m.renderer.Render(m.appState, ui.Dimentions{Height: m.windowHeight, Width: m.windowWidth})
 }
 
 func newModel(root string, pad int, style ui.Stylesheet) (model, error) {
@@ -45,7 +53,7 @@ func newModel(root string, pad int, style ui.Stylesheet) (model, error) {
 	if err != nil {
 		return model{}, err
 	}
-	renderer := &ui.Renderer{EdgePadding: pad, Style: style}
+	renderer := ui.NewRenderer(style, pad)
 	return model{
 		appState: s,
 		renderer: renderer,
@@ -55,6 +63,12 @@ func newModel(root string, pad int, style ui.Stylesheet) (model, error) {
 func listenFSEvents(eventsChan <-chan tree.NodeChange) tea.Cmd {
 	return func() tea.Msg {
 		return <-eventsChan
+	}
+}
+
+func listenPreviewReady(previewChan <-chan ui.Preview) tea.Cmd {
+	return func() tea.Msg {
+		return <-previewChan
 	}
 }
 

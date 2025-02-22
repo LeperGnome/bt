@@ -24,7 +24,7 @@ const (
 
 func GetPreview(node *t.Node, height, width int, style Stylesheet) string {
 	parts := strings.Split(node.Info.Name(), ".")
-	ext := parts[len(parts)-1]
+	ext := strings.ToLower(parts[len(parts)-1])
 	f := getPreviewFunc(ext)
 
 	preview := f(node, height, width, style)

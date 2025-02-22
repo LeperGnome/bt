@@ -18,6 +18,7 @@ import (
 const (
 	previewTextBytesLimit  int64 = 10_000
 	previewMediaBytesLimit int64 = 1_000_000
+	previewChangBuffer     int   = 20
 
 	minHeight = 10
 	minWidth  = 10
@@ -34,34 +35,68 @@ const (
 	helpPreview              = "Press ? to toggle help"
 )
 
+type Dimentions struct {
+	Width  int
+	Height int
+}
+
+type Preview struct {
+	Path    string
+	Dim     Dimentions
+	Content string
+}
+
 type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
-	offsetMem   int
-	previewBuff [previewTextBytesLimit]byte // TODO: not needed?
+
+	PreviewChan    <-chan Preview
+	previewCache   map[string]Preview
+	previewGenChan chan<- Preview
+
+	offsetMem int
 }
 
-func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
-	if winWidth < minWidth || winHeight < minHeight {
+func NewRenderer(style Stylesheet, edgePadding int) *Renderer {
+	previewChan := make(chan Preview, previewChangBuffer)
+	return &Renderer{
+		Style:          style,
+		EdgePadding:    edgePadding,
+		PreviewChan:    previewChan,
+		previewCache:   map[string]Preview{},
+		previewGenChan: previewChan,
+	}
+}
+
+func (r *Renderer) SetPreviewCache(preivew Preview) {
+	r.previewCache[preivew.Path] = preivew
+}
+
+func (r *Renderer) RemovePreviewCache(path string) {
+	delete(r.previewCache, path)
+}
+
+func (r *Renderer) Render(s *state.State, window Dimentions) string {
+	if window.Width < minWidth || window.Height < minHeight {
 		return tooSmall
 	}
 
-	renderedHeading, headLen := r.renderHeading(s, winWidth)
+	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
 	// section is half a screen, devided vertically
 	// left for tree, right for file preview
-	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
+	sectionWidth := int(math.Floor(0.5 * float64(window.Width)))
 
-	renderedTree := r.renderTree(s.Tree, winHeight-headLen, sectionWidth)
+	renderedTree := r.renderTree(s.Tree, window.Height-headLen, sectionWidth)
 
 	var rightPane string
 
 	if s.HelpToggle {
 		renderedHelp, helpLen := r.renderHelp(sectionWidth)
-		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen-helpLen, sectionWidth)
+		renderedContent := r.renderSelectedFileContent(s.Tree, window.Height-headLen-helpLen, sectionWidth)
 		rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
 	} else {
-		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen, sectionWidth)
+		renderedContent := r.renderSelectedFileContent(s.Tree, window.Height-headLen, sectionWidth)
 		rightPane = renderedContent
 	}
 
@@ -170,9 +205,18 @@ func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
 func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
 	ch := tree.GetSelectedChild()
 	if ch == nil {
-		return "<no child>" // TODO
+		return ""
 	}
-	return GetPreview(ch, height, width, r.Style)
+	dim := Dimentions{Height: height, Width: width}
+	preview, ok := r.previewCache[ch.Path]
+	if !ok || preview.Dim != dim {
+		go func() {
+			preview := GetPreview(ch, height, width, r.Style)
+			r.previewGenChan <- Preview{Content: preview, Dim: dim, Path: ch.Path}
+		}()
+		return "Loading..."
+	}
+	return preview.Content
 }
 
 // Crops tree lines, such that current line is visible and view is consistent.
