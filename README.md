@@ -2,14 +2,14 @@
 
 Manipulate file tree in terminal.
 
-<img alt="Preview" src="assets/preview.gif" width="600" />
+<img alt="Preview" src="assets/preview-w-img.gif" width="600" />
 
 ## Installation
 
 `bt` is currently only supported on linux and macOS. Windows support is on todo list.
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@v1.0.0
+go install github.com/LeperGnome/bt/cmd/bt@v1.1.0
 ```
 
 Or from source
@@ -102,6 +102,8 @@ Functional:
 Fixes:
 - [x] Fix size notation
 - [ ] File preview ignore control chars
+- [ ] Check existing name on rename
+- [ ] "gg" drops previous operation
 
 Maintenance:
 - [ ] Release artifacts

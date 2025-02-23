@@ -126,13 +126,7 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	perm := "--"
 
 	if selected != nil {
-		relPath, err := filepath.Rel(s.Tree.Root.Path, selected.Path)
-		if err != nil {
-			// probably won't ever happen, but still
-			path = fmt.Sprintf("(err: %s) %s", err.Error(), selected.Path)
-		} else {
-			path = relPath
-		}
+		path = makeRelPath(s.Tree.Root.Path, selected.Path)
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 		perm = selected.Info.Mode().String()
@@ -140,7 +134,7 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 
 	markedPath := ""
 	if s.Tree.Marked != nil {
-		markedPath = s.Tree.Marked.Path
+		markedPath = makeRelPath(s.Tree.Root.Path, s.Tree.Marked.Path)
 	}
 
 	operationBar := fmt.Sprintf(": %s", s.OpBuf.Repr())
@@ -358,4 +352,12 @@ func formatSize(s float64, base float64) string {
 		f = "%.2f %s"
 	}
 	return fmt.Sprintf(f, s, sizes[i])
+}
+
+func makeRelPath(base, target string) string {
+	relPath, err := filepath.Rel(base, target)
+	if err != nil {
+		return fmt.Sprintf("(err: %s) %s", err.Error(), target)
+	}
+	return relPath
 }
