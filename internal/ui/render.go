@@ -88,7 +88,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	// left for tree, right for file preview
 	sectionWidth := int(math.Floor(0.5 * float64(window.Width)))
 
-	renderedTree := r.renderTree(s.Tree, window.Height-headLen, sectionWidth)
+	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
 
 	var rightPane string
 
@@ -197,14 +197,14 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		Render(strings.Join(help, "\n")), len(help) + 1 // +1 for border
 }
 
-func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
-	renderedTreeLines, selectedRow := r.renderTreeFull(tree, width)
-	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, height)
+func (r *Renderer) renderTree(tree *t.Tree, dim Dimentions) string {
+	renderedTreeLines, selectedRow := r.renderTreeFull(tree, dim.Width)
+	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, dim.Height)
 
 	treeStyle := lipgloss.
 		NewStyle().
-		MaxWidth(width).
-		MarginRight(width)
+		MaxWidth(dim.Width).
+		MarginRight(dim.Width)
 
 	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
 }
