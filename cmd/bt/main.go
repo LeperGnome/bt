@@ -23,7 +23,7 @@ type model struct {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		listenFSEvents(m.appState.NodeChanges),
-		listenPreviewReady(m.renderer.PreviewChan),
+		listenPreviewReady(m.renderer.PreviewDoneChan),
 	)
 }
 
@@ -40,7 +40,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, listenFSEvents(m.appState.NodeChanges)
 	case ui.Preview:
 		m.renderer.SetPreviewCache(msg)
-		return m, listenPreviewReady(m.renderer.PreviewChan)
+		return m, listenPreviewReady(m.renderer.PreviewDoneChan)
 	}
 	return m, nil
 }

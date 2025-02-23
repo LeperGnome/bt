@@ -32,6 +32,7 @@ const (
 
 	tooSmall                 = "too small =("
 	binaryContentPlaceholder = "<binary content>"
+	loadingPlaceholder       = "Loading.."
 	helpPreview              = "Press ? to toggle help"
 )
 
@@ -50,9 +51,9 @@ type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
 
-	PreviewChan    <-chan Preview
-	previewCache   map[string]Preview
-	previewGenChan chan<- Preview
+	PreviewDoneChan <-chan Preview
+	previewCache    map[string]Preview // TODO: limit cache size somehow? Queue~ map?
+	previewGenChan  chan<- Preview
 
 	offsetMem int
 }
@@ -60,11 +61,11 @@ type Renderer struct {
 func NewRenderer(style Stylesheet, edgePadding int) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
 	return &Renderer{
-		Style:          style,
-		EdgePadding:    edgePadding,
-		PreviewChan:    previewChan,
-		previewCache:   map[string]Preview{},
-		previewGenChan: previewChan,
+		Style:           style,
+		EdgePadding:     edgePadding,
+		PreviewDoneChan: previewChan,
+		previewCache:    map[string]Preview{},
+		previewGenChan:  previewChan,
 	}
 }
 
@@ -93,10 +94,10 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 
 	if s.HelpToggle {
 		renderedHelp, helpLen := r.renderHelp(sectionWidth)
-		renderedContent := r.renderSelectedFileContent(s.Tree, window.Height-headLen-helpLen, sectionWidth)
+		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
 		rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
 	} else {
-		renderedContent := r.renderSelectedFileContent(s.Tree, window.Height-headLen, sectionWidth)
+		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
 		rightPane = renderedContent
 	}
 
@@ -208,19 +209,24 @@ func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
 	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
 }
 
-func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
+func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) string {
 	ch := tree.GetSelectedChild()
 	if ch == nil {
 		return ""
 	}
-	dim := Dimentions{Height: height, Width: width}
 	preview, ok := r.previewCache[ch.Path]
 	if !ok || preview.Dim != dim {
+		// Async preview generation. Main thread will read from preview channel and call Update,
+		// which will then set the cache and call Render.
+
+		// TODO: On long preview generaitons I can potentially spawn a lot of gorutines
+		// generating preview for the same file, if i'll go back and forth selecting it and the neighbor.
+		// I can solve it by using some locking mechanism.
 		go func() {
-			preview := GetPreview(ch, height, width, r.Style)
+			preview := GeneratePreview(ch, dim, r.Style)
 			r.previewGenChan <- Preview{Content: preview, Dim: dim, Path: ch.Path}
 		}()
-		return "Loading..."
+		return loadingPlaceholder
 	}
 	return preview.Content
 }
