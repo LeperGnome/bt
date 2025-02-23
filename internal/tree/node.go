@@ -54,12 +54,13 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 		if !n.showHidden && strings.HasPrefix(chInfo.Name(), ".") {
 			continue
 		}
-		// Looking if child already exist
+		// Looking if child already exist, so i'm keeping it's read children intact
 		var childToAdd *Node
 		if n.Children != nil {
 			for _, ech := range n.Children {
 				if ech.Info.Name() == chInfo.Name() {
 					childToAdd = ech
+					childToAdd.Info = chInfo // updating info in case file was changed
 					break
 				}
 			}

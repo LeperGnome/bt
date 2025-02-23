@@ -35,7 +35,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m, m.appState.ProcessKey(msg)
 	case tree.NodeChange:
-		m.renderer.RemovePreviewCache(msg.Path) // TODO: does not work, since file writes don't produce events here
+		m.renderer.RemovePreviewCache(msg.Path)
 		m.appState.ProcessNodeChange(msg)
 		return m, listenFSEvents(m.appState.NodeChanges)
 	case ui.Preview:

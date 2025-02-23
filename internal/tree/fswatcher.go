@@ -18,7 +18,7 @@ func runFSWatcher(watcher *fsnotify.Watcher) <-chan NodeChange {
 				if !ok {
 					return
 				}
-				if event.Has(fsnotify.Remove) || event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
+				if event.Has(fsnotify.Remove) || event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) || event.Has(fsnotify.Write) {
 					ch <- NodeChange{Path: event.Name}
 				}
 			case _, ok := <-watcher.Errors:

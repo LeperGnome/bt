@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -16,9 +17,8 @@ import (
 )
 
 const (
-	previewTextBytesLimit  int64 = 10_000
-	previewMediaBytesLimit int64 = 1_000_000
-	previewChangBuffer     int   = 20
+	previewTextBytesLimit int64 = 10_000
+	previewChangBuffer    int   = 20
 
 	minHeight = 10
 	minWidth  = 10
@@ -119,7 +119,13 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	perm := "--"
 
 	if selected != nil {
-		path = selected.Path
+		relPath, err := filepath.Rel(s.Tree.Root.Path, selected.Path)
+		if err != nil {
+			// probably won't ever happen, but still
+			path = fmt.Sprintf("(err: %s) %s", err.Error(), selected.Path)
+		} else {
+			path = relPath
+		}
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 		perm = selected.Info.Mode().String()
