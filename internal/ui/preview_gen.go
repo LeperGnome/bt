@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"image"
+	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
@@ -34,7 +35,7 @@ func GeneratePreview(node *t.Node, dim Dimentions, style Stylesheet) string {
 
 func getPreviewFunc(getPreviewGenFunc string) previewGenFunc {
 	switch getPreviewGenFunc {
-	case "png", "jpg", "jpeg":
+	case "png", "jpg", "jpeg", "gif":
 		return genHalfBlockPreview
 	default:
 		return genPlainTextPreview

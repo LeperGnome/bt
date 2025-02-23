@@ -54,11 +54,12 @@ type Renderer struct {
 	PreviewDoneChan <-chan Preview
 	previewCache    map[string]Preview // TODO: limit cache size somehow? Queue~ map?
 	previewGenChan  chan<- Preview
+	previewEnabled  bool
 
 	offsetMem int
 }
 
-func NewRenderer(style Stylesheet, edgePadding int) *Renderer {
+func NewRenderer(style Stylesheet, edgePadding int, previewEnabled bool) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
 	return &Renderer{
 		Style:           style,
@@ -66,6 +67,7 @@ func NewRenderer(style Stylesheet, edgePadding int) *Renderer {
 		PreviewDoneChan: previewChan,
 		previewCache:    map[string]Preview{},
 		previewGenChan:  previewChan,
+		previewEnabled:  previewEnabled,
 	}
 }
 
@@ -94,9 +96,13 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 
 	if s.HelpToggle {
 		renderedHelp, helpLen := r.renderHelp(sectionWidth)
-		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
-		rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
-	} else {
+		if r.previewEnabled {
+			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
+			rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
+		} else {
+			rightPane = renderedHelp
+		}
+	} else if r.previewEnabled {
 		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
 		rightPane = renderedContent
 	}
