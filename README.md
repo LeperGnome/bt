@@ -25,6 +25,7 @@ bt [flags] [directory]
 
 Flags:
   -i    In-place render (without alternate screen)
+  -p    Disabling file previews
   -pad uint
         Edge padding for top and bottom (default 5)
 ```
@@ -87,6 +88,7 @@ Functional:
 - [x] Toggle hidden directories
 - [x] Image preview (half-block only)
 - [x] xdg-open files
+- [x] Async preview
 - [ ] Image preview TGP
 - [ ] Custom delete cmd
 - [ ] Mark multiple files

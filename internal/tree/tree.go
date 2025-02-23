@@ -32,7 +32,6 @@ func (t *Tree) ToggleHiddenInCurrentDirectory() error {
 	return t.CurrentDir.readChildren(defaultNodeSorting)
 }
 func (t *Tree) RefreshNodeParentByPath(path string) error {
-	// I'm assuming, that all paths are relative to my tree root
 	parentDir := filepath.Dir(path)
 	cur := t.Root
 outer:
@@ -184,25 +183,30 @@ func (t *Tree) CollapseOrExpandSelected() error {
 }
 
 func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange, error) {
-	rootInfo, err := os.Lstat(dir)
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rootInfo, err := os.Lstat(absDir)
 	if err != nil {
 		return nil, nil, err
 	}
 	if !rootInfo.IsDir() {
-		return nil, nil, fmt.Errorf("%s is not a directory", dir)
+		return nil, nil, fmt.Errorf("%s is not a directory", absDir)
 	}
 	if sortingFunc == nil {
 		sortingFunc = defaultNodeSorting
 	}
 
-	root := NewNode(dir, rootInfo, nil)
+	root := NewNode(absDir, rootInfo, nil)
 
 	err = root.readChildren(sortingFunc)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(root.Children) == 0 {
-		return nil, nil, fmt.Errorf("Can't initialize on empty directory '%s'", dir)
+		return nil, nil, fmt.Errorf("Can't initialize on empty directory '%s'", absDir)
 	}
 
 	watcher, err := fsnotify.NewWatcher()

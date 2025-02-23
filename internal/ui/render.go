@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	previewTextBytesLimit  int64 = 10_000
-	previewMediaBytesLimit int64 = 1_000_000
+	previewTextBytesLimit int64 = 10_000
+	previewChangBuffer    int   = 20
 
 	minHeight = 10
 	minWidth  = 10
@@ -31,37 +32,78 @@ const (
 
 	tooSmall                 = "too small =("
 	binaryContentPlaceholder = "<binary content>"
+	loadingPlaceholder       = "Loading.."
 	helpPreview              = "Press ? to toggle help"
 )
+
+type Dimentions struct {
+	Width  int
+	Height int
+}
+
+type Preview struct {
+	Path    string
+	Dim     Dimentions
+	Content string
+}
 
 type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
-	offsetMem   int
-	previewBuff [previewTextBytesLimit]byte // TODO: not needed?
+
+	PreviewDoneChan <-chan Preview
+	previewCache    map[string]Preview // TODO: limit cache size somehow? Queue~ map?
+	previewGenChan  chan<- Preview
+	previewEnabled  bool
+
+	offsetMem int
 }
 
-func (r *Renderer) Render(s *state.State, winHeight, winWidth int) string {
-	if winWidth < minWidth || winHeight < minHeight {
+func NewRenderer(style Stylesheet, edgePadding int, previewEnabled bool) *Renderer {
+	previewChan := make(chan Preview, previewChangBuffer)
+	return &Renderer{
+		Style:           style,
+		EdgePadding:     edgePadding,
+		PreviewDoneChan: previewChan,
+		previewCache:    map[string]Preview{},
+		previewGenChan:  previewChan,
+		previewEnabled:  previewEnabled,
+	}
+}
+
+func (r *Renderer) SetPreviewCache(preivew Preview) {
+	r.previewCache[preivew.Path] = preivew
+}
+
+func (r *Renderer) RemovePreviewCache(path string) {
+	delete(r.previewCache, path)
+}
+
+func (r *Renderer) Render(s *state.State, window Dimentions) string {
+	if window.Width < minWidth || window.Height < minHeight {
 		return tooSmall
 	}
 
-	renderedHeading, headLen := r.renderHeading(s, winWidth)
+	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
 	// section is half a screen, devided vertically
 	// left for tree, right for file preview
-	sectionWidth := int(math.Floor(0.5 * float64(winWidth)))
+	sectionWidth := int(math.Floor(0.5 * float64(window.Width)))
 
-	renderedTree := r.renderTree(s.Tree, winHeight-headLen, sectionWidth)
+	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
 
 	var rightPane string
 
 	if s.HelpToggle {
 		renderedHelp, helpLen := r.renderHelp(sectionWidth)
-		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen-helpLen, sectionWidth)
-		rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
-	} else {
-		renderedContent := r.renderSelectedFileContent(s.Tree, winHeight-headLen, sectionWidth)
+		if r.previewEnabled {
+			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
+			rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
+		} else {
+			rightPane = renderedHelp
+		}
+	} else if r.previewEnabled {
+		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
 		rightPane = renderedContent
 	}
 
@@ -84,7 +126,13 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	perm := "--"
 
 	if selected != nil {
-		path = selected.Path
+		relPath, err := filepath.Rel(s.Tree.Root.Path, selected.Path)
+		if err != nil {
+			// probably won't ever happen, but still
+			path = fmt.Sprintf("(err: %s) %s", err.Error(), selected.Path)
+		} else {
+			path = relPath
+		}
 		changeTime = selected.Info.ModTime().Format(time.RFC822)
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 		perm = selected.Info.Mode().String()
@@ -155,24 +203,38 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		Render(strings.Join(help, "\n")), len(help) + 1 // +1 for border
 }
 
-func (r *Renderer) renderTree(tree *t.Tree, height, width int) string {
-	renderedTreeLines, selectedRow := r.renderTreeFull(tree, width)
-	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, height)
+func (r *Renderer) renderTree(tree *t.Tree, dim Dimentions) string {
+	renderedTreeLines, selectedRow := r.renderTreeFull(tree, dim.Width)
+	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, dim.Height)
 
 	treeStyle := lipgloss.
 		NewStyle().
-		MaxWidth(width).
-		MarginRight(width)
+		MaxWidth(dim.Width).
+		MarginRight(dim.Width)
 
 	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
 }
 
-func (r *Renderer) renderSelectedFileContent(tree *t.Tree, height, width int) string {
+func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) string {
 	ch := tree.GetSelectedChild()
 	if ch == nil {
-		return "<no child>" // TODO
+		return ""
 	}
-	return GetPreview(ch, height, width, r.Style)
+	preview, ok := r.previewCache[ch.Path]
+	if !ok || preview.Dim != dim {
+		// Async preview generation. Main thread will read from preview channel and call Update,
+		// which will then set the cache and call Render.
+
+		// TODO: On long preview generaitons I can potentially spawn a lot of gorutines
+		// generating preview for the same file, if i'll go back and forth selecting it and the neighbor.
+		// I can solve it by using some locking mechanism.
+		go func() {
+			preview := GeneratePreview(ch, dim, r.Style)
+			r.previewGenChan <- Preview{Content: preview, Dim: dim, Path: ch.Path}
+		}()
+		return loadingPlaceholder
+	}
+	return preview.Content
 }
 
 // Crops tree lines, such that current line is visible and view is consistent.
