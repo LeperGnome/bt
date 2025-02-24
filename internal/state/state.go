@@ -104,6 +104,7 @@ func (s *State) processKeyRename(msg tea.KeyMsg) tea.Cmd {
 		if err != nil {
 			s.ErrBuf = err.Error()
 		}
+		s.Tree.DropMark()
 		s.OpBuf = Noop
 		s.InputBuf = []rune{}
 	default:
