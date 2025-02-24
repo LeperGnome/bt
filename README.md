@@ -101,8 +101,8 @@ Functional:
 
 Fixes:
 - [x] Fix size notation
+- [x] Check existing name on rename
 - [ ] File preview ignore control chars
-- [ ] Check existing name on rename
 - [ ] "gg" drops previous operation
 
 Maintenance:

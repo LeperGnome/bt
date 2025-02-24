@@ -48,11 +48,21 @@ outer:
 		return nil
 	}
 }
-func (t *Tree) RenameMarked(name string) error {
+func (t *Tree) RenameMarked(newName string) error {
 	if t.Marked == nil {
 		return nil
 	}
-	err := os.Rename(t.Marked.Path, filepath.Join(t.Marked.Parent.Path, name))
+	if newName == "" {
+		return fmt.Errorf("new name must not be empty")
+	}
+	targetPath := filepath.Join(t.Marked.Parent.Path, newName)
+	// NOTE: probably not the best way to check if file exists
+	if _, err := os.Stat(targetPath); err == nil {
+		return fmt.Errorf("file %s already exists", newName)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	err := os.Rename(t.Marked.Path, targetPath)
 	if err != nil {
 		return err
 	}
