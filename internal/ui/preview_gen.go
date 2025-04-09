@@ -16,14 +16,14 @@ import (
 	t "github.com/LeperGnome/bt/internal/tree"
 )
 
-type previewGenFunc = func(node *t.Node, dim Dimentions, style Stylesheet) string
+type previewGenFunc = func(node *t.Node, dim Dimensions, style Stylesheet) string
 
 const (
 	tgpChunkSize = 2048
 	// tgpClearMedia = "\033_Ga=d\033\\" // TODO: TGP support
 )
 
-func GeneratePreview(node *t.Node, dim Dimentions, style Stylesheet) string {
+func GeneratePreview(node *t.Node, dim Dimensions, style Stylesheet) string {
 	parts := strings.Split(node.Info.Name(), ".")
 	ext := strings.ToLower(parts[len(parts)-1])
 	f := getPreviewFunc(ext)
@@ -42,7 +42,7 @@ func getPreviewFunc(getPreviewGenFunc string) previewGenFunc {
 	}
 }
 
-func genHalfBlockPreview(node *t.Node, dim Dimentions, style Stylesheet) string {
+func genHalfBlockPreview(node *t.Node, dim Dimensions, style Stylesheet) string {
 	f, err := os.Open(node.Path)
 	if err != nil {
 		return err.Error()
@@ -132,7 +132,7 @@ func imageHalfBlockRepr(r io.Reader, heightSymbols, widthSymbols int) string {
 	return strings.Join(res, "\n")
 }
 
-func genPlainTextPreview(node *t.Node, dim Dimentions, style Stylesheet) string {
+func genPlainTextPreview(node *t.Node, dim Dimensions, style Stylesheet) string {
 	buf := make([]byte, previewTextBytesLimit)
 	n, err := node.ReadContent(buf, previewTextBytesLimit)
 	if err != nil {
@@ -154,7 +154,7 @@ func genPlainTextPreview(node *t.Node, dim Dimentions, style Stylesheet) string 
 }
 
 // TODO: TGP support
-func genTPGPreviewPNG(node *t.Node, dim Dimentions, _ Stylesheet) string {
+func genTPGPreviewPNG(node *t.Node, dim Dimensions, _ Stylesheet) string {
 	preview, err := tgpDirectChunks(node.Path, dim.Height, dim.Width)
 	if err != nil {
 		return err.Error()

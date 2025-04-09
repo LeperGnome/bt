@@ -77,7 +77,7 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 	slices.SortFunc(chNodes, sortFunc)
 	n.Children = chNodes
 
-	// updateing selected child index if it's out of bounds after update
+	// updating selected child index if it's out of bounds after update
 	n.selectedChildIdx = max(min(n.selectedChildIdx, len(n.Children)-1), 0)
 	return nil
 }
