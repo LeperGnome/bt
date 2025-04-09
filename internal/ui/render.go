@@ -36,14 +36,14 @@ const (
 	helpPreview              = "Press ? to toggle help"
 )
 
-type Dimentions struct {
+type Dimensions struct {
 	Width  int
 	Height int
 }
 
 type Preview struct {
 	Path    string
-	Dim     Dimentions
+	Dim     Dimensions
 	Content string
 }
 
@@ -71,39 +71,39 @@ func NewRenderer(style Stylesheet, edgePadding int, previewEnabled bool) *Render
 	}
 }
 
-func (r *Renderer) SetPreviewCache(preivew Preview) {
-	r.previewCache[preivew.Path] = preivew
+func (r *Renderer) SetPreviewCache(preview Preview) {
+	r.previewCache[preview.Path] = preview
 }
 
 func (r *Renderer) RemovePreviewCache(path string) {
 	delete(r.previewCache, path)
 }
 
-func (r *Renderer) Render(s *state.State, window Dimentions) string {
+func (r *Renderer) Render(s *state.State, window Dimensions) string {
 	if window.Width < minWidth || window.Height < minHeight {
 		return tooSmall
 	}
 
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
-	// section is half a screen, devided vertically
+	// section is half a screen, divided vertically
 	// left for tree, right for file preview
 	sectionWidth := int(math.Floor(0.5 * float64(window.Width)))
 
-	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
+	renderedTree := r.renderTree(s.Tree, Dimensions{Height: window.Height - headLen, Width: sectionWidth})
 
 	var rightPane string
 
 	if s.HelpToggle {
 		renderedHelp, helpLen := r.renderHelp(sectionWidth)
 		if r.previewEnabled {
-			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
+			renderedContent := r.renderSelectedFileContent(s.Tree, Dimensions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
 			rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
 		} else {
 			rightPane = renderedHelp
 		}
 	} else if r.previewEnabled {
-		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
+		renderedContent := r.renderSelectedFileContent(s.Tree, Dimensions{Height: window.Height - headLen, Width: sectionWidth})
 		rightPane = renderedContent
 	}
 
@@ -197,7 +197,7 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		Render(strings.Join(help, "\n")), len(help) + 1 // +1 for border
 }
 
-func (r *Renderer) renderTree(tree *t.Tree, dim Dimentions) string {
+func (r *Renderer) renderTree(tree *t.Tree, dim Dimensions) string {
 	renderedTreeLines, selectedRow := r.renderTreeFull(tree, dim.Width)
 	croppedTreeLines := r.cropTree(renderedTreeLines, selectedRow, dim.Height)
 
@@ -209,7 +209,7 @@ func (r *Renderer) renderTree(tree *t.Tree, dim Dimentions) string {
 	return treeStyle.Render(strings.Join(croppedTreeLines, "\n"))
 }
 
-func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) string {
+func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimensions) string {
 	ch := tree.GetSelectedChild()
 	if ch == nil {
 		return ""
@@ -299,7 +299,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		indent = r.Style.TreeIndent.Render(indent)
 
 		if node.Info.IsDir() {
-			name = r.Style.TreeDirecotryName.Render(name)
+			name = r.Style.TreeDirectoryName.Render(name)
 		} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
 			name = r.Style.TreeLinkName.Render(name)
 		} else {
