@@ -46,6 +46,7 @@ func (o Operation) IsInput() bool {
 type State struct {
 	Tree        *t.Tree
 	OpBuf       Operation
+	PrevOpBuf   Operation
 	InputBuf    []rune
 	ErrBuf      string
 	NodeChanges <-chan t.NodeChange
@@ -153,10 +154,10 @@ func (s *State) processKeyInsertDir(msg tea.KeyMsg) tea.Cmd {
 	return nil
 }
 func (s *State) processKeyAnyInput(msg tea.KeyMsg) tea.Cmd {
-	// TODO: better input handling? cursor?
 	switch msg.String() {
 	case "ctrl+c", "esc":
 		s.OpBuf = Noop
+		s.PrevOpBuf = Noop
 		s.InputBuf = []rune{}
 		s.Tree.DropMark()
 	case "backspace":
@@ -169,12 +170,11 @@ func (s *State) processKeyAnyInput(msg tea.KeyMsg) tea.Cmd {
 	return nil
 }
 func (s *State) processKeyGo(msg tea.KeyMsg) tea.Cmd {
+	s.OpBuf = s.PrevOpBuf
 	switch msg.String() {
 	case "g":
-		s.OpBuf = Noop
 		s.Tree.CurrentDir.SelectFirst()
 	default:
-		s.OpBuf = Noop
 		return s.processKeyDefault(msg)
 	}
 	return nil
@@ -228,6 +228,12 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		s.ErrBuf = ""
 	case "ctrl+c", "q":
 		return tea.Quit
+	case "shift+tab":
+		s.Tree.ToggleMarkSelectedChild()
+		s.Tree.SelectPreviousChild()
+	case "tab":
+		s.Tree.ToggleMarkSelectedChild()
+		s.Tree.SelectNextChild()
 	case "j", "down":
 		s.Tree.SelectNextChild()
 	case "k", "up":
@@ -240,18 +246,25 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "h", "left":
 		s.Tree.SetParentAsCurrent()
 	case "y":
-		if ok := s.Tree.MarkSelectedChild(); ok {
+		if len(s.Tree.Marked) != 0 {
+			s.OpBuf = Copy
+		} else if ok := s.Tree.MarkSelectedChild(); ok {
 			s.OpBuf = Copy
 		}
 	case "d":
-		if ok := s.Tree.MarkSelectedChild(); ok {
+		if len(s.Tree.Marked) != 0 {
+			s.OpBuf = Move
+		} else if ok := s.Tree.MarkSelectedChild(); ok {
 			s.OpBuf = Move
 		}
 	case "D":
-		if ok := s.Tree.MarkSelectedChild(); ok {
+		if len(s.Tree.Marked) != 0 {
+			s.OpBuf = Delete
+		} else if ok := s.Tree.MarkSelectedChild(); ok {
 			s.OpBuf = Delete
 		}
 	case "g":
+		s.PrevOpBuf = s.OpBuf
 		s.OpBuf = Go
 	case "G":
 		s.Tree.CurrentDir.SelectLast()
@@ -259,8 +272,8 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		s.Tree.DropMark()
 		s.OpBuf = Insert
 	case "r":
-		if ok := s.Tree.MarkSelectedChild(); ok {
-			s.InputBuf = []rune(s.Tree.Marked.Info.Name())
+		if ok := s.Tree.MarkSelectedChild(); ok && len(s.Tree.Marked) == 1 {
+			s.InputBuf = []rune(s.Tree.Marked[0].Info.Name())
 			s.OpBuf = Rename
 		}
 	case "e":
