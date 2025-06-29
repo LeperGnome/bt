@@ -71,6 +71,7 @@ func (s *State) ProcessNodeChange(nodeChange t.NodeChange) tea.Cmd {
 	if err != nil {
 		s.ErrBuf = err.Error()
 	}
+	s.Tree.RemoveNodeFromMarkByPath(nodeChange.Path)
 	return nil
 }
 

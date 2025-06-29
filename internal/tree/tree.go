@@ -31,14 +31,22 @@ func (t *Tree) ToggleHiddenInCurrentDirectory() error {
 	t.CurrentDir.showHidden = !t.CurrentDir.showHidden
 	return t.CurrentDir.readChildren(defaultNodeSorting)
 }
+func (t *Tree) RemoveNodeFromMarkByPath(path string) {
+	t.Marked = slices.DeleteFunc(
+		t.Marked,
+		func(n *Node) bool { return n.Path == path },
+	)
+}
 func (t *Tree) RefreshNodeParentByPath(path string) error {
 	parentDir := filepath.Dir(path)
 	cur := t.Root
 outer:
 	for {
+		// Reading children when a parent node found.
 		if parentDir == cur.Path {
 			return cur.readChildren(t.sortingFunc)
 		}
+		// Going through directories towards `parentDir`.
 		for _, ch := range cur.Children {
 			if strings.HasPrefix(path, ch.Path) {
 				cur = ch
@@ -189,7 +197,7 @@ func (t *Tree) MoveMarkedToCurrentDir() error {
 		}
 		targetPath := filepath.Join(targetDir, targetFileName)
 
-		cmd := exec.Command("mv", marked.Path, targetPath)
+		cmd := exec.Command("mv", "-n", marked.Path, targetPath)
 		err = cmd.Run()
 		if err != nil {
 			return err // todo: this is not the same error...?
