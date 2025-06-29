@@ -89,9 +89,9 @@ Functional:
 - [x] Image preview (half-block only)
 - [x] xdg-open files
 - [x] Async preview
+- [ ] Mark multiple files
 - [ ] Image preview TGP
 - [ ] Custom delete cmd
-- [ ] Mark multiple files
 - [ ] Search
 - [ ] Marked to stdout on exit
 - [ ] Jump to current directory
