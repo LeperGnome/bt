@@ -19,7 +19,7 @@ type Stylesheet struct {
 	HelpContent lipgloss.Style
 
 	TreeRegularFileName lipgloss.Style
-	TreeDirecotryName   lipgloss.Style
+	TreeDirectoryName   lipgloss.Style
 	TreeLinkName        lipgloss.Style
 	TreeMarkedNode      lipgloss.Style
 	TreeSelectionArrow  lipgloss.Style
@@ -49,7 +49,7 @@ var DefaultStylesheet = Stylesheet{
 		BorderLeft(true),
 
 	TreeRegularFileName: lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
-	TreeDirecotryName:   lipgloss.NewStyle().Foreground(lipgloss.Color("#6D74AC")),
+	TreeDirectoryName:   lipgloss.NewStyle().Foreground(lipgloss.Color("#6D74AC")),
 	TreeLinkName:        lipgloss.NewStyle().Foreground(lipgloss.Color("#6DACA4")),
 	TreeMarkedNode: lipgloss.NewStyle().
 		BorderLeft(true).
