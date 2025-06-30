@@ -57,10 +57,7 @@ outer:
 	}
 }
 func (t *Tree) RenameMarked(newName string) error {
-	if t.Marked == nil || len(t.Marked) == 0 {
-		return nil
-	}
-	if len(t.Marked) > 1 {
+	if len(t.Marked) != 1 {
 		return nil
 	}
 	marked := t.Marked[0]
