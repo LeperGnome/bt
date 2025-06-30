@@ -32,25 +32,27 @@ Flags:
 
 Key bindings:
 
-| key           | desc                                                   |
-|---------------|--------------------------------------------------------|
-| j / arr down  | Select next child                                      |
-| k / arr up    | Select previous child                                  |
-| h / arr left  | Move up a dir                                          |
-| l / arr right | Enter selected directory                               |
-| d             | Move selected child (then 'p' to paste)                |
-| y             | Copy selected child (then 'p' to paste)                |
-| D             | Delete selected child                                  |
-| if / id       | Create file (if) / directory (id) in current directory |
-| r             | Rename selected child                                  |
-| e             | Edit selected file in $EDITOR                          |
-| gg            | Go to top most child in current directory              |
-| G             | Go to last child in current directory                  |
-| H             | Toggle hidden files in current directory               |
-| enter         | Open selected directory or file (xdg-open)             |
-| esc           | Clear error message / stop current operation           |
-| ?             | Toggle help                                            |
-| q / ctrl+c    | Exit                                                   |
+| key             | desc                                                      |
+|-----------------|-----------------------------------------------------------|
+| j / arr down    | Select next child                                         |
+| k / arr up      | Select previous child                                     |
+| h / arr left    | Move up a dir                                             |
+| l / arr right   | Enter selected directory                                  |
+| tab             | Mark selected child and move down                         |
+| shift+tab       | Mark selected child and move up                           |
+| d               | Move marked children (then 'p' to paste)                  |
+| y               | Copy marked children (then 'p' to paste)                  |
+| D               | Delete marked child                                       |
+| if / id         | Create file (if) / directory (id) in current directory    |
+| r               | Rename selected child                                     |
+| e               | Edit selected file in $EDITOR                             |
+| gg              | Go to top most child in current directory                 |
+| G               | Go to last child in current directory                     |
+| H               | Toggle hidden files in current directory                  |
+| enter           | Open / close selected directory or open file (xdg-open)   |
+| esc             | Clear error message / stop current operation / drop marks |
+| ?               | Toggle help                                               |
+| q / ctrl+c      | Exit                                                      |
 
 ## Motivation
 
