@@ -273,9 +273,11 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		s.Tree.DropMark()
 		s.OpBuf = Insert
 	case "r":
-		if ok := s.Tree.MarkSelectedChild(); ok && len(s.Tree.Marked) == 1 {
-			s.InputBuf = []rune(s.Tree.Marked[0].Info.Name())
-			s.OpBuf = Rename
+		if len(s.Tree.Marked) == 0 {
+			if ok := s.Tree.MarkSelectedChild(); ok {
+				s.InputBuf = []rune(s.Tree.Marked[0].Info.Name())
+				s.OpBuf = Rename
+			}
 		}
 	case "e":
 		child := s.Tree.GetSelectedChild()
