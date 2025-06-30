@@ -15,7 +15,7 @@ import (
 type Tree struct {
 	Root       *Node
 	CurrentDir *Node
-	Marked     *Node
+	Marked     []*Node
 
 	sortingFunc NodeSortingFunc
 	watcher     *fsnotify.Watcher
@@ -31,14 +31,22 @@ func (t *Tree) ToggleHiddenInCurrentDirectory() error {
 	t.CurrentDir.showHidden = !t.CurrentDir.showHidden
 	return t.CurrentDir.readChildren(defaultNodeSorting)
 }
+func (t *Tree) RemoveNodeFromMarkByPath(path string) {
+	t.Marked = slices.DeleteFunc(
+		t.Marked,
+		func(n *Node) bool { return n.Path == path },
+	)
+}
 func (t *Tree) RefreshNodeParentByPath(path string) error {
 	parentDir := filepath.Dir(path)
 	cur := t.Root
 outer:
 	for {
+		// Reading children when a parent node found.
 		if parentDir == cur.Path {
 			return cur.readChildren(t.sortingFunc)
 		}
+		// Going through directories towards `parentDir`.
 		for _, ch := range cur.Children {
 			if strings.HasPrefix(path, ch.Path) {
 				cur = ch
@@ -49,20 +57,22 @@ outer:
 	}
 }
 func (t *Tree) RenameMarked(newName string) error {
-	if t.Marked == nil {
+	if len(t.Marked) != 1 {
 		return nil
 	}
+	marked := t.Marked[0]
+
 	if newName == "" {
 		return fmt.Errorf("new name must not be empty")
 	}
-	targetPath := filepath.Join(t.Marked.Parent.Path, newName)
+	targetPath := filepath.Join(marked.Parent.Path, newName)
 	// NOTE: probably not the best way to check if file exists
 	if _, err := os.Stat(targetPath); err == nil {
 		return fmt.Errorf("file %s already exists", newName)
 	} else if !os.IsNotExist(err) {
 		return err
 	}
-	err := os.Rename(t.Marked.Path, targetPath)
+	err := os.Rename(marked.Path, targetPath)
 	if err != nil {
 		return err
 	}
@@ -114,9 +124,22 @@ func (t *Tree) SetParentAsCurrent() {
 		t.CurrentDir = t.CurrentDir.Parent
 	}
 }
+func (t *Tree) ToggleMarkSelectedChild() bool {
+	if selected := t.GetSelectedChild(); selected != nil {
+		if !slices.Contains(t.Marked, selected) {
+			t.Marked = append(t.Marked, selected)
+		} else {
+			t.Marked = slices.DeleteFunc(t.Marked, func(n *Node) bool { return n == selected })
+		}
+		return true
+	}
+	return false
+}
 func (t *Tree) MarkSelectedChild() bool {
 	if selected := t.GetSelectedChild(); selected != nil {
-		t.Marked = selected
+		if !slices.Contains(t.Marked, selected) {
+			t.Marked = append(t.Marked, selected)
+		}
 		return true
 	}
 	return false
@@ -128,10 +151,12 @@ func (t *Tree) DeleteMarked() error {
 	if t.Marked == nil {
 		return nil
 	}
-	cmd := exec.Command("rm", "-r", t.Marked.Path)
-	err := cmd.Run()
-	if err != nil {
-		return err // todo: this is not the same error...?
+	for _, marked := range t.Marked {
+		cmd := exec.Command("rm", "-r", marked.Path)
+		err := cmd.Run()
+		if err != nil {
+			return err // todo: this is not the same error...?
+		}
 	}
 	t.Marked = nil
 	return nil
@@ -141,16 +166,18 @@ func (t *Tree) CopyMarkedToCurrentDir() error {
 		return nil
 	}
 	targetDir := t.CurrentDir.Path
-	targetFileName, err := generateNewFileName(t.Marked.Info.Name(), targetDir)
-	if err != nil {
-		return err
-	}
-	targetPath := filepath.Join(targetDir, targetFileName)
+	for _, marked := range t.Marked {
+		targetFileName, err := generateNewFileName(marked.Info.Name(), targetDir)
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.Join(targetDir, targetFileName)
 
-	cmd := exec.Command("cp", "-r", t.Marked.Path, targetPath)
-	err = cmd.Run()
-	if err != nil {
-		return err // todo: this is not the same error...?
+		cmd := exec.Command("cp", "-r", marked.Path, targetPath)
+		err = cmd.Run()
+		if err != nil {
+			return err // todo: this is not the same error...?
+		}
 	}
 	t.Marked = nil
 	return nil
@@ -160,16 +187,18 @@ func (t *Tree) MoveMarkedToCurrentDir() error {
 		return nil
 	}
 	targetDir := t.CurrentDir.Path
-	targetFileName, err := generateNewFileName(t.Marked.Info.Name(), targetDir)
-	if err != nil {
-		return err
-	}
-	targetPath := filepath.Join(targetDir, targetFileName)
+	for _, marked := range t.Marked {
+		targetFileName, err := generateNewFileName(marked.Info.Name(), targetDir)
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.Join(targetDir, targetFileName)
 
-	cmd := exec.Command("mv", t.Marked.Path, targetPath)
-	err = cmd.Run()
-	if err != nil {
-		return err // todo: this is not the same error...?
+		cmd := exec.Command("mv", "-n", marked.Path, targetPath)
+		err = cmd.Run()
+		if err != nil {
+			return err // todo: this is not the same error...?
+		}
 	}
 	t.Marked = nil
 	return nil

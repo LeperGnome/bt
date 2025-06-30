@@ -1,6 +1,6 @@
 module github.com/LeperGnome/bt
 
-go 1.22.2
+go 1.24.4
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.3

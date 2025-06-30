@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -131,17 +132,21 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 		perm = selected.Info.Mode().String()
 	}
-
-	markedPath := ""
-	if s.Tree.Marked != nil {
-		markedPath = makeRelPath(s.Tree.Root.Path, s.Tree.Marked.Path)
-	}
-
 	operationBar := fmt.Sprintf(": %s", s.OpBuf.Repr())
-	if markedPath != "" {
-		operationBar += fmt.Sprintf(" [%s]", markedPath)
-	}
 
+	if s.Tree.Marked != nil {
+		paths := []string{}
+		for _, marked := range s.Tree.Marked {
+			if s.Tree.Marked != nil {
+				paths = append(paths, makeRelPath(s.Tree.Root.Path, marked.Path))
+			}
+		}
+
+		markedPath := strings.Join(paths, ", ")
+		if markedPath != "" {
+			operationBar += fmt.Sprintf(" [%s]", markedPath)
+		}
+	}
 	if s.OpBuf.IsInput() {
 		operationBar += fmt.Sprintf(" │ %s │", r.Style.OperationBarInput.Render(string(s.InputBuf)))
 	}
@@ -306,7 +311,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 			name = r.Style.TreeRegularFileName.Render(name)
 		}
 
-		if tree.Marked == node {
+		if slices.Contains(tree.Marked, node) {
 			name = r.Style.TreeMarkedNode.Render(name)
 		}
 
