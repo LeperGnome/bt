@@ -9,7 +9,7 @@ Manipulate file tree in terminal.
 `bt` is currently only supported on linux and macOS. Windows support is on todo list.
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@v1.1.0
+go install github.com/LeperGnome/bt/cmd/bt@v1.2.0
 ```
 
 Or from source
@@ -17,6 +17,8 @@ Or from source
 ```bash
 make install
 ```
+
+Or download prebuilt binaries from the [latest release](https://github.com/LeperGnome/bt/releases).
 
 ## Usage
 
@@ -104,12 +106,12 @@ Functional:
 Fixes:
 - [x] Fix size notation
 - [x] Check existing name on rename
+- [x] "gg" drops previous operation
 - [ ] File preview ignore control chars
-- [ ] "gg" drops previous operation
 
 Maintenance:
 - [x] Tests (at least a little bit)
-- [ ] Release artifacts
+- [x] Release artifacts
 - [ ] CI
 - [ ] Distribution
 - [ ] CONTRIBUTING.md
