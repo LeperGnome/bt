@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -131,17 +132,21 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 		size = formatSize(float64(selected.Info.Size()), 1024.0)
 		perm = selected.Info.Mode().String()
 	}
-
-	markedPath := ""
-	if s.Tree.Marked != nil {
-		markedPath = makeRelPath(s.Tree.Root.Path, s.Tree.Marked.Path)
-	}
-
 	operationBar := fmt.Sprintf(": %s", s.OpBuf.Repr())
-	if markedPath != "" {
-		operationBar += fmt.Sprintf(" [%s]", markedPath)
-	}
 
+	if s.Tree.Marked != nil {
+		paths := []string{}
+		for _, marked := range s.Tree.Marked {
+			if s.Tree.Marked != nil {
+				paths = append(paths, makeRelPath(s.Tree.Root.Path, marked.Path))
+			}
+		}
+
+		markedPath := strings.Join(paths, ", ")
+		if markedPath != "" {
+			operationBar += fmt.Sprintf(" [%s]", markedPath)
+		}
+	}
 	if s.OpBuf.IsInput() {
 		operationBar += fmt.Sprintf(" │ %s │", r.Style.OperationBarInput.Render(string(s.InputBuf)))
 	}
@@ -173,22 +178,25 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 
 func (r *Renderer) renderHelp(width int) (string, int) {
 	help := []string{
-		"j / arr down   Select next child",
-		"k / arr up     Select previous child",
-		"h / arr left   Move up a dir",
-		"l / arr right  Enter selected directory",
-		"if / id	    Create file (if) / directory (id) in current directory",
-		"d              Move selected child (then 'p' to paste)",
-		"y              Copy selected child (then 'p' to paste)",
-		"D              Delete selected child",
-		"r              Rename selected child",
-		"e              Edit selected file in $EDITOR",
-		"gg             Go to top most child in current directory",
-		"G              Go to last child in current directory",
-		"H              Toggle hidden files in current directory",
-		"enter          Open selected directory or file (xdg-open)",
-		"esc            Clear error message / stop current operation",
-		"q / ctrl+c     Exit",
+		"j / arr down     Select next child",
+		"k / arr up       Select previous child",
+		"h / arr left     Move up a dir",
+		"l / arr right    Enter selected directory",
+		"tab              Mark selected child and move down",
+		"shift+tab        Mark selected child and move up",
+		"d                Move marked children (then 'p' to paste)",
+		"y                Copy marked children (then 'p' to paste)",
+		"D                Delete marked child",
+		"if / id          Create file (if) / directory (id) in current directory",
+		"r                Rename selected child",
+		"e                Edit selected file in $EDITOR",
+		"gg               Go to top most child in current directory",
+		"G                Go to last child in current directory",
+		"H                Toggle hidden files in current directory",
+		"enter            Open / close selected directory or open file (xdg-open)",
+		"esc              Clear error message / stop current operation / drop marks",
+		"?                Toggle help",
+		"q / ctrl+c       Exit",
 	}
 	return r.Style.
 		HelpContent.
@@ -306,7 +314,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 			name = r.Style.TreeRegularFileName.Render(name)
 		}
 
-		if tree.Marked == node {
+		if slices.Contains(tree.Marked, node) {
 			name = r.Style.TreeMarkedNode.Render(name)
 		}
 
