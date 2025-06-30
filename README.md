@@ -91,7 +91,7 @@ Functional:
 - [x] Image preview (half-block only)
 - [x] xdg-open files
 - [x] Async preview
-- [ ] Mark multiple files
+- [x] Mark multiple files
 - [ ] Image preview TGP
 - [ ] Custom delete cmd
 - [ ] Search
@@ -108,8 +108,8 @@ Fixes:
 - [ ] "gg" drops previous operation
 
 Maintenance:
+- [x] Tests (at least a little bit)
 - [ ] Release artifacts
-- [ ] Tests
 - [ ] CI
 - [ ] Distribution
 - [ ] CONTRIBUTING.md
