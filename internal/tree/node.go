@@ -24,7 +24,7 @@ type Node struct {
 
 func (n *Node) SelectLast() {
 	// can I just check for len here?
-	if n.Children != nil && len(n.Children) > 0 {
+	if len(n.Children) > 0 {
 		n.selectedChildIdx = len(n.Children) - 1
 	}
 }
@@ -45,7 +45,6 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 	chNodes := []*Node{}
 
 	for _, ch := range children {
-		ch := ch
 		chInfo, err := ch.Info()
 		if err != nil {
 			return err
@@ -89,10 +88,10 @@ func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
 		return 0, fmt.Errorf("file not selected or is irregular")
 	}
 	f, err := os.Open(n.Path)
-	defer f.Close()
 	if err != nil {
 		return 0, err
 	}
+	defer f.Close()
 	limitedReader := io.LimitReader(f, limit)
 	k, err := limitedReader.Read(buf)
 	if err != nil {
