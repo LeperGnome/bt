@@ -13,7 +13,7 @@ import (
 )
 
 type model struct {
-	window ui.Dimentions
+	window ui.Dimensions
 
 	appState *state.State
 	renderer *ui.Renderer
@@ -29,7 +29,7 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.window = ui.Dimentions{Height: msg.Height, Width: msg.Width}
+		m.window = ui.Dimensions{Height: msg.Height, Width: msg.Width}
 	case tea.KeyMsg:
 		return m, m.appState.ProcessKey(msg)
 	case tree.NodeChange:
@@ -46,12 +46,12 @@ func (m model) View() string {
 	return m.renderer.Render(m.appState, m.window)
 }
 
-func newModel(root string, pad int, style ui.Stylesheet, disablePrevew bool) (model, error) {
+func newModel(root string, pad int, style ui.Stylesheet, disablePreview bool) (model, error) {
 	s, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := ui.NewRenderer(style, pad, !disablePrevew)
+	renderer := ui.NewRenderer(style, pad, !disablePreview)
 	return model{
 		appState: s,
 		renderer: renderer,
