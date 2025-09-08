@@ -193,7 +193,7 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		"gg               Go to top most child in current directory",
 		"G                Go to last child in current directory",
 		"H                Toggle hidden files in current directory",
-		"enter            Open / close selected directory or open file (xdg-open)",
+		"enter            Open / close selected directory or open file (xdg-open / open)",
 		"esc              Clear error message / stop current operation / drop marks",
 		"?                Toggle help",
 		"q / ctrl+c       Exit",
