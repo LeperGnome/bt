@@ -1,10 +1,12 @@
 package state
 
 import (
-	t "github.com/LeperGnome/bt/internal/tree"
-	tea "github.com/charmbracelet/bubbletea"
 	"os"
 	"os/exec"
+	runtime "runtime"
+
+	t "github.com/LeperGnome/bt/internal/tree"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Operation int
@@ -316,7 +318,13 @@ func openEditor(path string) tea.Cmd {
 }
 
 func xdgOpenFile(path string) tea.Cmd {
-	c := exec.Command("xdg-open", path)
+	var cmd string
+	if runtime.GOOS == "darwin" {
+		cmd = "open"
+	} else {
+		cmd = "xdg-open"
+	}
+	c := exec.Command(cmd, path)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return nil
 	})
