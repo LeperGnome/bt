@@ -46,12 +46,12 @@ func (m model) View() string {
 	return m.renderer.Render(m.appState, m.window)
 }
 
-func newModel(root string, pad int, style ui.Stylesheet, disablePrevew bool) (model, error) {
+func newModel(root string, pad int, style ui.Stylesheet, disablePrevew bool, highlightCurrentIndent bool) (model, error) {
 	s, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := ui.NewRenderer(style, pad, !disablePrevew)
+	renderer := ui.NewRenderer(style, pad, !disablePrevew, highlightCurrentIndent)
 	return model{
 		appState: s,
 		renderer: renderer,
@@ -73,6 +73,7 @@ func listenPreviewReady(previewChan <-chan ui.Preview) tea.Cmd {
 func main() {
 	paddingPtr := flag.Uint("pad", 5, "Edge padding for top and bottom")
 	disablePreviewPtr := flag.Bool("p", false, "Disabling file previews")
+	highlightCurrentIndentPtr := flag.Bool("c", true, "Highlight current indent")
 	inlinePtr := flag.Bool("i", false, "In-place render (without alternate screen)")
 	flag.Parse()
 	rootPath := flag.Arg(0)
@@ -80,7 +81,7 @@ func main() {
 		rootPath = "."
 	}
 
-	m, err := newModel(rootPath, int(*paddingPtr), ui.DefaultStylesheet, *disablePreviewPtr)
+	m, err := newModel(rootPath, int(*paddingPtr), ui.DefaultStylesheet, *disablePreviewPtr, *highlightCurrentIndentPtr)
 	if err != nil {
 		fmt.Printf("Error on init: %v", err)
 		os.Exit(1)

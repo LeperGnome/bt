@@ -24,6 +24,7 @@ type Stylesheet struct {
 	TreeMarkedNode      lipgloss.Style
 	TreeSelectionArrow  lipgloss.Style
 	TreeIndent          lipgloss.Style
+	TreeIndentSelected  lipgloss.Style
 
 	PlainTextPreview lipgloss.Style
 }
@@ -57,6 +58,7 @@ var DefaultStylesheet = Stylesheet{
 		Background(lipgloss.Color("#363636")),
 	TreeSelectionArrow: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
 	TreeIndent:         lipgloss.NewStyle().Foreground(lipgloss.Color("#363636")),
+	TreeIndentSelected: lipgloss.NewStyle().Foreground(lipgloss.Color("#ACA46D")),
 
 	PlainTextPreview: lipgloss.NewStyle().
 		Italic(true).
