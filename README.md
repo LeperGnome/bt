@@ -25,12 +25,11 @@ Or download prebuilt binaries from the [latest release](https://github.com/Leper
 ```bash
 bt [flags] [directory]
 
-Flags:
-  -i    In-place render (without alternate screen)
-  -p    Disabling file previews
-  -c    Highlight current indent (default true)
-  -pad uint
-        Edge padding for top and bottom (default 5)
+Usage of bt:
+      --file_preview       Enable file previews (default true)
+      --highlight_indent   Highlight current indent (default true)
+  -i, --in_place_render    In-place render (without alternate screen)
+  -p, --padding uint       Edge padding for top and bottom (default 5)
 ```
 
 Key bindings:
@@ -56,6 +55,19 @@ Key bindings:
 | esc           | Clear error message / stop current operation / drop marks      |
 | ?             | Toggle help                                                    |
 | q / ctrl+c    | Exit                                                           |
+
+## Configuration
+
+You can configure `bt` via configuration file at `$HOME/.config/bt/conf.yaml`
+
+```yaml
+
+padding: 5
+file_preview: true
+highlight_indent: true
+in_place_render: false
+
+```
 
 ## Motivation
 

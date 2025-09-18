@@ -29,7 +29,7 @@ func (s *BtTestSuite) SetupTest() {
 	_, err = f.WriteString("some text")
 	s.Require().NoError(err)
 
-	m, err := newModel(dir, 5, ui.DefaultStylesheet, true, true)
+	m, err := newModel(dir, ui.DefaultStylesheet, 5, true, true)
 	s.Require().NoError(err)
 
 	tm := teatest.NewTestModel(s.T(), m, teatest.WithInitialTermSize(100, 100))
