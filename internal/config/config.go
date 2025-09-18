@@ -19,23 +19,20 @@ func GetConfig(flags *pflag.FlagSet) BtConfig {
 
 	vp.BindPFlags(flags)
 
-	vp.SetConfigName("btconfig")
+	vp.SetConfigName("conf")
 	vp.SetConfigType("yaml")
 	vp.AddConfigPath("$HOME/.config/bt")
-	vp.AddConfigPath(".")
 
-	err := vp.ReadInConfig()
-	if err != nil {
-		log.Fatalf("Error reading config file, %s", err)
-		panic(err)
+	if err := vp.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Fatalf("Error retreiving config file: %v", err)
+		}
 	}
 
 	var config BtConfig
-	// Unmarshal the config file into the AppConfig struct
-	err = vp.Unmarshal(&config)
+	err := vp.Unmarshal(&config)
 	if err != nil {
 		log.Fatalf("Unable to decode into struct, %v", err)
-		panic(err)
 	}
 
 	return config

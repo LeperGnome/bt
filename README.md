@@ -56,6 +56,19 @@ Key bindings:
 | ?             | Toggle help                                                    |
 | q / ctrl+c    | Exit                                                           |
 
+## Configuration
+
+You can configure `bt` via configuration file at `$HOME/.config/bt/conf.yaml`
+
+```yaml
+
+padding: 5
+file_preview: true
+highlight_indent: true
+in_place_render: false
+
+```
+
 ## Motivation
 
 I find myself disliking a majority of column-based terminal file managers.
