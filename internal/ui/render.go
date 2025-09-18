@@ -57,18 +57,26 @@ type Renderer struct {
 	previewGenChan  chan<- Preview
 	previewEnabled  bool
 
+	highlightCurrentIndent bool
+
 	offsetMem int
 }
 
-func NewRenderer(style Stylesheet, edgePadding int, previewEnabled bool) *Renderer {
+func NewRenderer(
+	style Stylesheet,
+	edgePadding int,
+	previewEnabled bool,
+	highlightCurrentIndent bool,
+) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
 	return &Renderer{
-		Style:           style,
-		EdgePadding:     edgePadding,
-		PreviewDoneChan: previewChan,
-		previewCache:    map[string]Preview{},
-		previewGenChan:  previewChan,
-		previewEnabled:  previewEnabled,
+		Style:                  style,
+		EdgePadding:            edgePadding,
+		PreviewDoneChan:        previewChan,
+		previewCache:           map[string]Preview{},
+		previewGenChan:         previewChan,
+		previewEnabled:         previewEnabled,
+		highlightCurrentIndent: highlightCurrentIndent,
 	}
 }
 
@@ -266,45 +274,55 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 	currentLine := 0
 
 	type stackEl struct {
-		*t.Node
-		string
-		bool
+		node         *t.Node
+		parentIndent []string
+		isLast       bool
 	}
 	lines := []string{}
-	s := stack.NewStack(stackEl{tree.Root, "", false})
+	s := stack.NewStack(stackEl{tree.Root, []string{""}, false})
+
+	selected := tree.GetSelectedChild()
 
 	for s.Len() > 0 {
 		el := s.Pop()
 		linen += 1
 
-		node := el.Node
-		isLast := el.bool
-		parentIndent := el.string
-
-		var indent string
-		if node == tree.Root {
-			indent = ""
-		} else if isLast {
-			indent = parentIndent + indentCurrentLast
-			parentIndent = parentIndent + indentEmpty
-		} else {
-			indent = parentIndent + indentCurrent
-			parentIndent = parentIndent + indentParent
-		}
+		node := el.node
+		isLast := el.isLast
+		parentIndent := el.parentIndent
 
 		if node == nil {
 			continue
 		}
 
+		// Making indent
+		indentStyle := r.Style.TreeIndent
+
+		if r.highlightCurrentIndent && selected != nil && selected.Parent == node.Parent {
+			indentStyle = r.Style.TreeIndentSelected
+		}
+
+		var indent string
+
+		if node == tree.Root {
+			indent = ""
+		} else if isLast {
+			indent = strings.Join(append(parentIndent, indentStyle.Render(indentCurrentLast)), "")
+			parentIndent = append(parentIndent, indentEmpty)
+		} else {
+			indent = strings.Join(append(parentIndent, indentStyle.Render(indentCurrent)), "")
+			parentIndent = append(parentIndent, indentStyle.Render(indentParent))
+		}
+
+		indentRuneCount := (len(parentIndent) - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
+
+		// Making name
 		name := node.Info.Name()
 		nameRuneCountNoStyle := utf8.RuneCountInString(name)
-		indentRuneCount := utf8.RuneCountInString(indent)
 
 		if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
 			name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
 		}
-
-		indent = r.Style.TreeIndent.Render(indent)
 
 		if node.Info.IsDir() {
 			name = r.Style.TreeDirecotryName.Render(name)
@@ -333,7 +351,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				emptyIndent := r.Style.TreeIndent.Render(parentIndent + indentCurrentLast)
+				emptyIndent := strings.Join(append(parentIndent, r.Style.TreeIndentSelected.Render(indentCurrentLast)), "")
 				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(arrow))
 				currentLine = linen + 1
 			}
