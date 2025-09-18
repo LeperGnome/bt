@@ -17,11 +17,6 @@ type BtConfig struct {
 func GetConfig(flags *pflag.FlagSet) BtConfig {
 	vp := viper.New()
 
-	vp.SetDefault("padding", 5)
-	vp.SetDefault("file_preview", true)
-	vp.SetDefault("highlight_indent", true)
-	vp.SetDefault("in_place_render", false)
-
 	vp.BindPFlags(flags)
 
 	vp.SetConfigName("btconfig")
