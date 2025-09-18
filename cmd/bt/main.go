@@ -1,12 +1,13 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	flag "github.com/spf13/pflag"
 
+	"github.com/LeperGnome/bt/internal/config"
 	"github.com/LeperGnome/bt/internal/state"
 	"github.com/LeperGnome/bt/internal/tree"
 	ui "github.com/LeperGnome/bt/internal/ui"
@@ -46,12 +47,18 @@ func (m model) View() string {
 	return m.renderer.Render(m.appState, m.window)
 }
 
-func newModel(root string, pad int, style ui.Stylesheet, disablePrevew bool, highlightCurrentIndent bool) (model, error) {
+func newModel(
+	root string,
+	style ui.Stylesheet,
+	padding int,
+	filePreview bool,
+	highlightCurrentIndent bool,
+) (model, error) {
 	s, err := state.InitState(root)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := ui.NewRenderer(style, pad, !disablePrevew, highlightCurrentIndent)
+	renderer := ui.NewRenderer(style, padding, filePreview, highlightCurrentIndent)
 	return model{
 		appState: s,
 		renderer: renderer,
@@ -71,24 +78,34 @@ func listenPreviewReady(previewChan <-chan ui.Preview) tea.Cmd {
 }
 
 func main() {
-	paddingPtr := flag.Uint("pad", 5, "Edge padding for top and bottom")
-	disablePreviewPtr := flag.Bool("p", false, "Disabling file previews")
-	highlightCurrentIndentPtr := flag.Bool("c", true, "Highlight current indent")
-	inlinePtr := flag.Bool("i", false, "In-place render (without alternate screen)")
+	flag.UintP("padding", "p", 5, "Edge padding for top and bottom")
+	flag.BoolP("in_place_render", "i", false, "In-place render (without alternate screen)")
+	flag.Bool("file_preview", true, "Enable file previews")
+	flag.Bool("highlight_indent", true, "Highlight current indent")
+
 	flag.Parse()
+
+	conf := config.GetConfig(flag.CommandLine)
+
 	rootPath := flag.Arg(0)
 	if rootPath == "" {
 		rootPath = "."
 	}
 
-	m, err := newModel(rootPath, int(*paddingPtr), ui.DefaultStylesheet, *disablePreviewPtr, *highlightCurrentIndentPtr)
+	m, err := newModel(
+		rootPath,
+		ui.DefaultStylesheet,
+		conf.Padding,
+		conf.FilePreview,
+		conf.HighlightIndent,
+	)
 	if err != nil {
 		fmt.Printf("Error on init: %v", err)
 		os.Exit(1)
 	}
 
 	opts := []tea.ProgramOption{}
-	if !*inlinePtr {
+	if !conf.InPlaceRender {
 		opts = append(opts, tea.WithAltScreen())
 	}
 

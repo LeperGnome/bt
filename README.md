@@ -25,12 +25,11 @@ Or download prebuilt binaries from the [latest release](https://github.com/Leper
 ```bash
 bt [flags] [directory]
 
-Flags:
-  -i    In-place render (without alternate screen)
-  -p    Disabling file previews
-  -c    Highlight current indent (default true)
-  -pad uint
-        Edge padding for top and bottom (default 5)
+Usage of bt:
+  -i, --inplace         In-place render (without alternate screen)
+      --no-hl-current   Highlight current indent (default true)
+      --no-preview      Disabling file previews
+  -p, --padding uint    Edge padding for top and bottom (default 5)
 ```
 
 Key bindings:
