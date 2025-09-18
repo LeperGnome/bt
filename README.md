@@ -26,10 +26,10 @@ Or download prebuilt binaries from the [latest release](https://github.com/Leper
 bt [flags] [directory]
 
 Usage of bt:
-  -i, --inplace         In-place render (without alternate screen)
-      --no-hl-current   Highlight current indent (default true)
-      --no-preview      Disabling file previews
-  -p, --padding uint    Edge padding for top and bottom (default 5)
+      --file_preview       Enable file previews (default true)
+      --highlight_indent   Highlight current indent (default true)
+  -i, --in_place_render    In-place render (without alternate screen)
+  -p, --padding uint       Edge padding for top and bottom (default 5)
 ```
 
 Key bindings:
