@@ -2,7 +2,7 @@
 
 Manipulate file tree in terminal.
 
-<img alt="Preview" src="assets/preview-w-img.gif" width="600" />
+<img alt="Preview" src="assets/preview-w-hl.gif" width="600" />
 
 ## Installation
 
@@ -28,6 +28,7 @@ bt [flags] [directory]
 Flags:
   -i    In-place render (without alternate screen)
   -p    Disabling file previews
+  -c    Highlight current indent (default true)
   -pad uint
         Edge padding for top and bottom (default 5)
 ```
@@ -113,7 +114,7 @@ Fixes:
 Maintenance:
 - [x] Tests (at least a little bit)
 - [x] Release artifacts
-- [ ] CI
+- [x] CI
 - [ ] Distribution
 - [ ] CONTRIBUTING.md
 ```

@@ -7,7 +7,7 @@ Set TypingSpeed 200ms
 Sleep 500ms
 Type "bt"
 Enter
-Type "jjjjjjjl"
+Type "jjjjjjjjl"
 Sleep 600ms
 Type "j"
 Sleep 600ms
@@ -36,7 +36,7 @@ Enter
 Sleep 500ms
 Type "jdkkkkkklpr"
 Backspace 10
-Type "script.go"
+Type "other.go"
 Enter
 Sleep 2s
 Type "hhkk"
