@@ -295,6 +295,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 			continue
 		}
 
+		// Making indent
 		indentStyle := r.Style.TreeIndent
 
 		if r.highlightCurrentIndent && selected != nil && selected.Parent == node.Parent {
@@ -313,9 +314,11 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 			parentIndent = append(parentIndent, indentStyle.Render(indentParent))
 		}
 
+		indentRuneCount := (len(parentIndent) - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
+
+		// Making name
 		name := node.Info.Name()
 		nameRuneCountNoStyle := utf8.RuneCountInString(name)
-		indentRuneCount := (len(parentIndent) - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
 
 		if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
 			name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
@@ -348,7 +351,6 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				// TODO ?
 				emptyIndent := strings.Join(append(parentIndent, r.Style.TreeIndentSelected.Render(indentCurrentLast)), "")
 				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(arrow))
 				currentLine = linen + 1
