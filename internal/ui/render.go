@@ -338,7 +338,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 
 		repr := indent + name
 
-		if !node.ShowsHidden() && node.Info.IsDir() {
+		if node.ShowsHiddenNonDefault() && node.Info.IsDir() {
 			repr += "◦"
 		}
 

@@ -53,8 +53,9 @@ func newModel(
 	padding int,
 	filePreview bool,
 	highlightCurrentIndent bool,
+	showHiddenDefault bool,
 ) (model, error) {
-	s, err := state.InitState(root)
+	s, err := state.InitState(root, showHiddenDefault)
 	if err != nil {
 		return model{}, err
 	}
@@ -82,6 +83,7 @@ func main() {
 	flag.BoolP("in_place_render", "i", false, "In-place render (without alternate screen)")
 	flag.Bool("file_preview", true, "Enable file previews")
 	flag.Bool("highlight_indent", true, "Highlight current indent")
+	flag.Bool("show_hidden", true, "Show hidden files by default")
 
 	flag.Parse()
 
@@ -98,6 +100,7 @@ func main() {
 		conf.Padding,
 		conf.FilePreview,
 		conf.HighlightIndent,
+		conf.ShowHidden,
 	)
 	if err != nil {
 		fmt.Printf("Error on init: %v", err)

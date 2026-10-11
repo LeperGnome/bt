@@ -55,8 +55,8 @@ type State struct {
 	HelpToggle  bool
 }
 
-func InitState(root string) (*State, error) {
-	tree, ncc, err := t.InitTree(root, nil)
+func InitState(root string, showHiddenDefault bool) (*State, error) {
+	tree, ncc, err := t.InitTree(root, nil, showHiddenDefault)
 	if err != nil {
 		return nil, err
 	}

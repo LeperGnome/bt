@@ -28,6 +28,7 @@ bt [flags] [directory]
 Usage of bt:
       --file_preview       Enable file previews (default true)
       --highlight_indent   Highlight current indent (default true)
+      --show_hidden        Show hidden files by default (default true)
   -i, --in_place_render    In-place render (without alternate screen)
   -p, --padding uint       Edge padding for top and bottom (default 5)
 ```
@@ -108,6 +109,7 @@ Functional:
 - [x] xdg-open files
 - [x] Async preview
 - [x] Mark multiple files
+- [x] Config for showing hidden files by default
 - [ ] Image preview TGP
 - [ ] Custom delete cmd
 - [ ] Search

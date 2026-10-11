@@ -20,6 +20,7 @@ type Node struct {
 
 	selectedChildIdx int
 	showHidden       bool
+	showHiddenDefault       bool
 }
 
 func (n *Node) SelectLast() {
@@ -28,8 +29,8 @@ func (n *Node) SelectLast() {
 		n.selectedChildIdx = len(n.Children) - 1
 	}
 }
-func (n *Node) ShowsHidden() bool {
-	return n.showHidden
+func (n *Node) ShowsHiddenNonDefault() bool {
+	return n.showHidden != n.showHiddenDefault
 }
 func (n *Node) SelectFirst() {
 	n.selectedChildIdx = 0
@@ -69,6 +70,7 @@ func (n *Node) readChildren(sortFunc NodeSortingFunc) error {
 				filepath.Join(n.Path, chInfo.Name()),
 				chInfo,
 				n,
+				n.showHiddenDefault,
 			)
 		}
 		chNodes = append(chNodes, childToAdd)
@@ -100,13 +102,14 @@ func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
 	return k, nil
 }
 
-func NewNode(path string, info fs.FileInfo, parent *Node) *Node {
+func NewNode(path string, info fs.FileInfo, parent *Node, showHidden bool) *Node {
 	return &Node{
 		Path:       path,
 		Info:       info,
 		Children:   nil,
 		Parent:     parent,
-		showHidden: true,
+		showHidden: showHidden,
+		showHiddenDefault: showHidden,
 	}
 }
 
