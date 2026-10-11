@@ -67,6 +67,7 @@ padding: 5
 file_preview: true
 highlight_indent: true
 in_place_render: false
+show_hidden: true
 
 ```
 
