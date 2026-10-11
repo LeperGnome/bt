@@ -30,6 +30,7 @@ const (
 	indentCurrentLast   = "└─ "
 	indentEmpty         = "   "
 	emptydirContentName = "..."
+	hiddenToggle        = "◦"
 
 	tooSmall                 = "too small =("
 	binaryContentPlaceholder = "<binary content>"
@@ -338,8 +339,8 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 
 		repr := indent + name
 
-		if !node.ShowsHidden() && node.Info.IsDir() {
-			repr += "◦"
+		if node.ShowsHiddenNonDefault() && node.Info.IsDir() {
+			repr += hiddenToggle
 		}
 
 		if tree.GetSelectedChild() == node {

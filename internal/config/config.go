@@ -12,6 +12,7 @@ type BtConfig struct {
 	FilePreview     bool `mapstructure:"file_preview"`
 	HighlightIndent bool `mapstructure:"highlight_indent"`
 	InPlaceRender   bool `mapstructure:"in_place_render"`
+	ShowHidden 		bool `mapstructure:"show_hidden"`
 }
 
 func GetConfig(flags *pflag.FlagSet) BtConfig {

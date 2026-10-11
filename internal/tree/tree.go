@@ -221,7 +221,7 @@ func (t *Tree) CollapseOrExpandSelected() error {
 	return nil
 }
 
-func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange, error) {
+func InitTree(dir string, sortingFunc NodeSortingFunc, showHiddenDefault bool) (*Tree, <-chan NodeChange, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, nil, err
@@ -238,7 +238,7 @@ func InitTree(dir string, sortingFunc NodeSortingFunc) (*Tree, <-chan NodeChange
 		sortingFunc = defaultNodeSorting
 	}
 
-	root := NewNode(absDir, rootInfo, nil)
+	root := NewNode(absDir, rootInfo, nil, showHiddenDefault)
 
 	err = root.readChildren(sortingFunc)
 	if err != nil {
