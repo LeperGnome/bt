@@ -52,6 +52,8 @@ Key bindings:
 | gg            | Go to top most child in current directory                      |
 | G             | Go to last child in current directory                          |
 | H             | Toggle hidden files in current directory                       |
+| [             | Grow preview pane                                              |
+| ]             | Shrink preview pane                                            |
 | enter         | Open / close selected directory or open file (xdg-open / open) |
 | esc           | Clear error message / stop current operation / drop marks      |
 | [             | Grow preview pane                                              |

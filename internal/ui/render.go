@@ -69,6 +69,7 @@ func NewRenderer(
 	edgePadding int,
 	previewEnabled bool,
 	highlightCurrentIndent bool,
+	previewRatio float64,
 ) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
 	return &Renderer{
@@ -79,7 +80,7 @@ func NewRenderer(
 		previewGenChan:         previewChan,
 		previewEnabled:         previewEnabled,
 		highlightCurrentIndent: highlightCurrentIndent,
-		previewRatio:           0.7,
+		previewRatio:           previewRatio,
 	}
 }
 
@@ -208,6 +209,8 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		"gg               Go to top most child in current directory",
 		"G                Go to last child in current directory",
 		"H                Toggle hidden files in current directory",
+		"[                Grow preview pane",
+		"]                Shrink preview pane",
 		"enter            Open / close selected directory or open file (xdg-open / open)",
 		"esc              Clear error message / stop current operation / drop marks",
 		"?                Toggle help",

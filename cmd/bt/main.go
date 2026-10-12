@@ -62,12 +62,13 @@ func newModel(
 	filePreview bool,
 	highlightCurrentIndent bool,
 	showHiddenDefault bool,
+	previewRatio float64,
 ) (model, error) {
 	s, err := state.InitState(root, showHiddenDefault)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := ui.NewRenderer(style, padding, filePreview, highlightCurrentIndent)
+	renderer := ui.NewRenderer(style, padding, filePreview, highlightCurrentIndent, previewRatio)
 	return model{
 		appState: s,
 		renderer: renderer,
@@ -89,6 +90,7 @@ func listenPreviewReady(previewChan <-chan ui.Preview) tea.Cmd {
 func main() {
 	flag.UintP("padding", "p", 5, "Edge padding for top and bottom")
 	flag.BoolP("in_place_render", "i", false, "In-place render (without alternate screen)")
+	flag.Float64("preview_ratio", 0.5, "File preview to window width ratio")
 	flag.Bool("file_preview", true, "Enable file previews")
 	flag.Bool("highlight_indent", true, "Highlight current indent")
 	flag.Bool("show_hidden", true, "Show hidden files by default")
@@ -109,6 +111,7 @@ func main() {
 		conf.FilePreview,
 		conf.HighlightIndent,
 		conf.ShowHidden,
+		conf.PreviewRatio,
 	)
 	if err != nil {
 		fmt.Printf("Error on init: %v", err)

@@ -5,14 +5,18 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/go-playground/validator/v10"
 )
 
+var validate *validator.Validate
+
 type BtConfig struct {
-	Padding         int  `mapstructure:"padding"`
-	FilePreview     bool `mapstructure:"file_preview"`
-	HighlightIndent bool `mapstructure:"highlight_indent"`
-	InPlaceRender   bool `mapstructure:"in_place_render"`
-	ShowHidden 		bool `mapstructure:"show_hidden"`
+	Padding         int     `mapstructure:"padding" validate:"gte=1,lte=256"`
+	FilePreview     bool    `mapstructure:"file_preview"`
+	HighlightIndent bool    `mapstructure:"highlight_indent"`
+	InPlaceRender   bool    `mapstructure:"in_place_render"`
+	ShowHidden 		bool    `mapstructure:"show_hidden"`
+	PreviewRatio 	float64 `mapstructure:"preview_ratio" validate:"gte=0.1,lte=0.9"`
 }
 
 func GetConfig(flags *pflag.FlagSet) BtConfig {
@@ -36,5 +40,15 @@ func GetConfig(flags *pflag.FlagSet) BtConfig {
 		log.Fatalf("Unable to decode into struct, %v", err)
 	}
 
+	err = validateConfig(&config)
+	if err != nil {
+		log.Fatalf("Invalid configuration values provided, %v", err)
+	}
+
 	return config
+}
+
+func validateConfig(config *BtConfig) error {
+	validate = validator.New()
+	return validate.Struct(config)
 }
