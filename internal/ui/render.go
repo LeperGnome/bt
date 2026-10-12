@@ -53,20 +53,16 @@ type Renderer struct {
 	Style       Stylesheet
 	EdgePadding int
 
-	PreviewDoneChan <-chan Preview
-	previewCache    map[string]Preview // TODO: limit cache size somehow? Queue~ map?
-	previewGenChan  chan<- Preview
-	previewEnabled  bool
-
+	PreviewDoneChan        <-chan Preview
+	previewCache           map[string]Preview // TODO: limit cache size somehow? Queue~ map?
+	previewGenChan         chan<- Preview
 	highlightCurrentIndent bool
-
-	offsetMem int
+	offsetMem              int
 }
 
 func NewRenderer(
 	style Stylesheet,
 	edgePadding int,
-	previewEnabled bool,
 	highlightCurrentIndent bool,
 ) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
@@ -76,7 +72,6 @@ func NewRenderer(
 		PreviewDoneChan:        previewChan,
 		previewCache:           map[string]Preview{},
 		previewGenChan:         previewChan,
-		previewEnabled:         previewEnabled,
 		highlightCurrentIndent: highlightCurrentIndent,
 	}
 }
@@ -99,24 +94,27 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	}
 
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
+	bodyLen := window.Height - headLen
 
-	// left for tree, right for file preview
-	treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
-	previewWidth := window.Width - treeWidth
+	var treeDimentions Dimentions
+	var preview string
 
-	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: treeWidth})
-
-	var rightPane string
-
-	if r.previewEnabled {
-		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: previewWidth})
-		rightPane = renderedContent
+	if s.PreviewEnabled {
+		treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
+		previewWidth := window.Width - treeWidth
+		treeDimentions = Dimentions{Height: bodyLen, Width: treeWidth}
+		preview = r.renderSelectedFileContent(s.Tree, Dimentions{Height: bodyLen, Width: previewWidth})
+	} else {
+		treeDimentions = Dimentions{Height: bodyLen, Width: window.Width}
+		preview = ""
 	}
+
+	renderedTree := r.renderTree(s.Tree, treeDimentions)
 
 	renderedTreeWithContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		renderedTree,
-		rightPane,
+		preview,
 	)
 
 	return renderedHeading + "\n" + renderedTreeWithContent
