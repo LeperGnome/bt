@@ -73,7 +73,7 @@ file_preview: true
 highlight_indent: true
 in_place_render: false
 show_hidden: true
-
+preview_ratio: 0.5
 ```
 
 ## Motivation
