@@ -198,6 +198,7 @@ func (r *Renderer) renderHelp(width int) string {
 		"gg               Go to top most child in current directory",
 		"G                Go to last child in current directory",
 		"H                Toggle hidden files in current directory",
+		"L                Toggle preview pane",
 		"[                Grow preview pane",
 		"]                Shrink preview pane",
 		"enter            Open / close selected directory or open file (xdg-open / open)",
