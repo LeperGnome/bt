@@ -60,8 +60,7 @@ type Renderer struct {
 
 	highlightCurrentIndent bool
 
-	offsetMem    int
-	previewRatio float64
+	offsetMem int
 }
 
 func NewRenderer(
@@ -79,12 +78,7 @@ func NewRenderer(
 		previewGenChan:         previewChan,
 		previewEnabled:         previewEnabled,
 		highlightCurrentIndent: highlightCurrentIndent,
-		previewRatio:           0.7,
 	}
-}
-
-func (r *Renderer) AdjustPreviewRatio(delta float64) {
-	r.previewRatio = math.Max(0.1, math.Min(0.9, r.previewRatio+delta))
 }
 
 func (r *Renderer) SetPreviewCache(preivew Preview) {
@@ -103,7 +97,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
 	// left for tree, right for file preview
-	treeWidth := int(math.Floor((1.0 - r.previewRatio) * float64(window.Width)))
+	treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
 	previewWidth := window.Width - treeWidth
 
 	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: treeWidth})
@@ -208,6 +202,8 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		"gg               Go to top most child in current directory",
 		"G                Go to last child in current directory",
 		"H                Toggle hidden files in current directory",
+		"[                Grow preview pane",
+		"]                Shrink preview pane",
 		"enter            Open / close selected directory or open file (xdg-open / open)",
 		"esc              Clear error message / stop current operation / drop marks",
 		"?                Toggle help",

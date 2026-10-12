@@ -18,9 +18,9 @@ type Node struct {
 	Children []*Node // nil - not read or it's a file
 	Parent   *Node
 
-	selectedChildIdx int
-	showHidden       bool
-	showHiddenDefault       bool
+	selectedChildIdx  int
+	showHidden        bool
+	showHiddenDefault bool
 }
 
 func (n *Node) SelectLast() {
@@ -104,11 +104,11 @@ func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
 
 func NewNode(path string, info fs.FileInfo, parent *Node, showHidden bool) *Node {
 	return &Node{
-		Path:       path,
-		Info:       info,
-		Children:   nil,
-		Parent:     parent,
-		showHidden: showHidden,
+		Path:              path,
+		Info:              info,
+		Children:          nil,
+		Parent:            parent,
+		showHidden:        showHidden,
 		showHiddenDefault: showHidden,
 	}
 }
