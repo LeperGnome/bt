@@ -82,7 +82,7 @@ func listenPreviewReady(previewChan <-chan ui.Preview) tea.Cmd {
 func main() {
 	flag.UintP("padding", "p", 5, "Edge padding for top and bottom")
 	flag.BoolP("in_place_render", "i", false, "In-place render (without alternate screen)")
-	flag.Float64("preview_ratio", 0.5, "File preview to window width ratio")
+	flag.Float64("preview_ratio", 0.5, "File preview to window width ratio, should be within [0.1, 0.9]")
 	flag.Bool("file_preview", true, "Enable file previews")
 	flag.Bool("highlight_indent", true, "Highlight current indent")
 	flag.Bool("show_hidden", true, "Show hidden files by default")

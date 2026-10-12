@@ -26,11 +26,12 @@ Or download prebuilt binaries from the [latest release](https://github.com/Leper
 bt [flags] [directory]
 
 Usage of bt:
-      --file_preview       Enable file previews (default true)
-      --highlight_indent   Highlight current indent (default true)
-      --show_hidden        Show hidden files by default (default true)
-  -i, --in_place_render    In-place render (without alternate screen)
-  -p, --padding uint       Edge padding for top and bottom (default 5)
+      --file_preview          Enable file previews (default true)
+      --highlight_indent      Highlight current indent (default true)
+  -i, --in_place_render       In-place render (without alternate screen)
+  -p, --padding uint          Edge padding for top and bottom (default 5)
+      --preview_ratio float   File preview to window width ratio, should be within [0.1, 0.9] (default 0.5)
+      --show_hidden           Show hidden files by default (default true)
 ```
 
 Key bindings:
