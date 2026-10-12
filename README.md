@@ -54,6 +54,8 @@ Key bindings:
 | H             | Toggle hidden files in current directory                       |
 | enter         | Open / close selected directory or open file (xdg-open / open) |
 | esc           | Clear error message / stop current operation / drop marks      |
+| [             | Grow preview pane                                              |
+| ]             | Shrink preview pane                                            |
 | ?             | Toggle help                                                    |
 | q / ctrl+c    | Exit                                                           |
 

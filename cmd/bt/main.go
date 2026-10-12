@@ -32,6 +32,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.window = ui.Dimentions{Height: msg.Height, Width: msg.Width}
 	case tea.KeyMsg:
+		switch msg.String() {
+		case "]":
+			m.renderer.AdjustPreviewRatio(-0.05)
+			return m, nil
+		case "[":
+			m.renderer.AdjustPreviewRatio(0.05)
+			return m, nil
+		}
 		return m, m.appState.ProcessKey(msg)
 	case tree.NodeChange:
 		m.renderer.RemovePreviewCache(msg.Path)

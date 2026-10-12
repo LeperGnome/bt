@@ -60,7 +60,8 @@ type Renderer struct {
 
 	highlightCurrentIndent bool
 
-	offsetMem int
+	offsetMem    int
+	previewRatio float64
 }
 
 func NewRenderer(
@@ -78,7 +79,12 @@ func NewRenderer(
 		previewGenChan:         previewChan,
 		previewEnabled:         previewEnabled,
 		highlightCurrentIndent: highlightCurrentIndent,
+		previewRatio:           0.7,
 	}
+}
+
+func (r *Renderer) AdjustPreviewRatio(delta float64) {
+	r.previewRatio = math.Max(0.1, math.Min(0.9, r.previewRatio+delta))
 }
 
 func (r *Renderer) SetPreviewCache(preivew Preview) {
@@ -96,24 +102,24 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
-	// section is half a screen, devided vertically
 	// left for tree, right for file preview
-	sectionWidth := int(math.Floor(0.5 * float64(window.Width)))
+	treeWidth := int(math.Floor((1.0 - r.previewRatio) * float64(window.Width)))
+	previewWidth := window.Width - treeWidth
 
-	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
+	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: treeWidth})
 
 	var rightPane string
 
 	if s.HelpToggle {
-		renderedHelp, helpLen := r.renderHelp(sectionWidth)
+		renderedHelp, helpLen := r.renderHelp(previewWidth)
 		if r.previewEnabled {
-			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: sectionWidth})
+			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: previewWidth})
 			rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
 		} else {
 			rightPane = renderedHelp
 		}
 	} else if r.previewEnabled {
-		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: sectionWidth})
+		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: previewWidth})
 		rightPane = renderedContent
 	}
 
