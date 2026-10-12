@@ -35,7 +35,7 @@ const (
 	tooSmall                 = "too small =("
 	binaryContentPlaceholder = "<binary content>"
 	loadingPlaceholder       = "Loading.."
-	helpPreview              = "Press ? to toggle help"
+	helpPreview              = "? help"
 )
 
 type Dimentions struct {
@@ -94,6 +94,10 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 		return tooSmall
 	}
 
+	if s.HelpToggle {
+		return r.renderHelp(window.Width)
+	}
+
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
 	// left for tree, right for file preview
@@ -104,15 +108,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 
 	var rightPane string
 
-	if s.HelpToggle {
-		renderedHelp, helpLen := r.renderHelp(previewWidth)
-		if r.previewEnabled {
-			renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen - helpLen, Width: previewWidth})
-			rightPane = lipgloss.JoinVertical(lipgloss.Left, renderedHelp, renderedContent)
-		} else {
-			rightPane = renderedHelp
-		}
-	} else if r.previewEnabled {
+	if r.previewEnabled {
 		renderedContent := r.renderSelectedFileContent(s.Tree, Dimentions{Height: window.Height - headLen, Width: previewWidth})
 		rightPane = renderedContent
 	}
@@ -185,8 +181,10 @@ func (r *Renderer) renderHeading(s *state.State, width int) (string, int) {
 	return strings.Join(header, "\n"), len(header)
 }
 
-func (r *Renderer) renderHelp(width int) (string, int) {
+func (r *Renderer) renderHelp(width int) string {
 	help := []string{
+		"Key bindings: ",
+		"",
 		"j / arr down     Select next child",
 		"k / arr up       Select previous child",
 		"h / arr left     Move up a dir",
@@ -213,7 +211,7 @@ func (r *Renderer) renderHelp(width int) (string, int) {
 		HelpContent.
 		MaxWidth(width).
 		MarginRight(width).
-		Render(strings.Join(help, "\n")), len(help) + 1 // +1 for border
+		Render(strings.Join(help, "\n"))
 }
 
 func (r *Renderer) renderTree(tree *t.Tree, dim Dimentions) string {

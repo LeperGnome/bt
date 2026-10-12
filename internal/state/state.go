@@ -22,6 +22,7 @@ const (
 	InsertFile
 	InsertDir
 	Rename
+	HelpView
 )
 
 func (o Operation) Repr() string {
@@ -35,6 +36,7 @@ func (o Operation) Repr() string {
 		"enter new file name:",
 		"enter new directory name:",
 		"renaming",
+		"help",
 	}[o]
 }
 func (o Operation) IsInput() bool {
@@ -99,6 +101,8 @@ func (s *State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
 		return s.processKeyInsertDir(msg)
 	case Rename:
 		return s.processKeyRename(msg)
+	case HelpView:
+		return s.processKeyHelp(msg)
 	default:
 		return s.processKeyDefault(msg)
 	}
@@ -181,6 +185,14 @@ func (s *State) processKeyGo(msg tea.KeyMsg) tea.Cmd {
 		s.Tree.CurrentDir.SelectFirst()
 	default:
 		return s.processKeyDefault(msg)
+	}
+	return nil
+}
+func (s *State) processKeyHelp(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "?", "esc", "q":
+		s.OpBuf = Noop
+		s.HelpToggle = false
 	}
 	return nil
 }
@@ -298,7 +310,8 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "[":
 		s.AdjustPreviewRatio(0.05)
 	case "?":
-		s.HelpToggle = !s.HelpToggle
+		s.HelpToggle = true
+		s.OpBuf = HelpView
 	case "enter":
 		child := s.Tree.GetSelectedChild()
 		if child != nil && child.Info.Mode().IsRegular() {
