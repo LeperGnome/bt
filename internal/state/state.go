@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math"
 	"os"
 	"os/exec"
 	runtime "runtime"
@@ -46,25 +47,27 @@ func (o Operation) IsInput() bool {
 }
 
 type State struct {
-	Tree        *t.Tree
-	OpBuf       Operation
-	PrevOpBuf   Operation
-	InputBuf    []rune
-	ErrBuf      string
-	NodeChanges <-chan t.NodeChange
-	HelpToggle  bool
+	Tree         *t.Tree
+	OpBuf        Operation
+	PrevOpBuf    Operation
+	InputBuf     []rune
+	ErrBuf       string
+	NodeChanges  <-chan t.NodeChange
+	HelpToggle   bool
+	PreviewRatio float64
 }
 
-func InitState(root string, showHiddenDefault bool) (*State, error) {
+func InitState(root string, showHiddenDefault bool, previewRatio float64) (*State, error) {
 	tree, ncc, err := t.InitTree(root, nil, showHiddenDefault)
 	if err != nil {
 		return nil, err
 	}
 	return &State{
-		Tree:        tree,
-		OpBuf:       Noop,
-		InputBuf:    []rune{},
-		NodeChanges: ncc,
+		Tree:         tree,
+		OpBuf:        Noop,
+		InputBuf:     []rune{},
+		NodeChanges:  ncc,
+		PreviewRatio: previewRatio,
 	}, nil
 }
 
@@ -76,7 +79,6 @@ func (s *State) ProcessNodeChange(nodeChange t.NodeChange) tea.Cmd {
 	s.Tree.RemoveNodeFromMarkByPath(nodeChange.Path)
 	return nil
 }
-
 func (s *State) ProcessKey(msg tea.KeyMsg) tea.Cmd {
 	switch s.OpBuf {
 	case Noop:
@@ -290,6 +292,11 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if err := s.Tree.ToggleHiddenInCurrentDirectory(); err != nil {
 			s.ErrBuf = err.Error()
 		}
+
+	case "]":
+		s.AdjustPreviewRatio(-0.05)
+	case "[":
+		s.AdjustPreviewRatio(0.05)
 	case "?":
 		s.HelpToggle = !s.HelpToggle
 	case "enter":
@@ -304,6 +311,9 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		}
 	}
 	return nil
+}
+func (s *State) AdjustPreviewRatio(delta float64) {
+	s.PreviewRatio = math.Max(0.1, math.Min(0.9, s.PreviewRatio+delta))
 }
 
 func openEditor(path string) tea.Cmd {

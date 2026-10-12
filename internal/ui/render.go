@@ -60,8 +60,7 @@ type Renderer struct {
 
 	highlightCurrentIndent bool
 
-	offsetMem    int
-	previewRatio float64
+	offsetMem int
 }
 
 func NewRenderer(
@@ -69,7 +68,6 @@ func NewRenderer(
 	edgePadding int,
 	previewEnabled bool,
 	highlightCurrentIndent bool,
-	previewRatio float64,
 ) *Renderer {
 	previewChan := make(chan Preview, previewChangBuffer)
 	return &Renderer{
@@ -80,12 +78,7 @@ func NewRenderer(
 		previewGenChan:         previewChan,
 		previewEnabled:         previewEnabled,
 		highlightCurrentIndent: highlightCurrentIndent,
-		previewRatio:           previewRatio,
 	}
-}
-
-func (r *Renderer) AdjustPreviewRatio(delta float64) {
-	r.previewRatio = math.Max(0.1, math.Min(0.9, r.previewRatio+delta))
 }
 
 func (r *Renderer) SetPreviewCache(preivew Preview) {
@@ -104,7 +97,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	renderedHeading, headLen := r.renderHeading(s, window.Width)
 
 	// left for tree, right for file preview
-	treeWidth := int(math.Floor((1.0 - r.previewRatio) * float64(window.Width)))
+	treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
 	previewWidth := window.Width - treeWidth
 
 	renderedTree := r.renderTree(s.Tree, Dimentions{Height: window.Height - headLen, Width: treeWidth})

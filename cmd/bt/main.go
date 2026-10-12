@@ -32,14 +32,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.window = ui.Dimentions{Height: msg.Height, Width: msg.Width}
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "]":
-			m.renderer.AdjustPreviewRatio(-0.05)
-			return m, nil
-		case "[":
-			m.renderer.AdjustPreviewRatio(0.05)
-			return m, nil
-		}
 		return m, m.appState.ProcessKey(msg)
 	case tree.NodeChange:
 		m.renderer.RemovePreviewCache(msg.Path)
@@ -64,11 +56,11 @@ func newModel(
 	showHiddenDefault bool,
 	previewRatio float64,
 ) (model, error) {
-	s, err := state.InitState(root, showHiddenDefault)
+	s, err := state.InitState(root, showHiddenDefault, previewRatio)
 	if err != nil {
 		return model{}, err
 	}
-	renderer := ui.NewRenderer(style, padding, filePreview, highlightCurrentIndent, previewRatio)
+	renderer := ui.NewRenderer(style, padding, filePreview, highlightCurrentIndent)
 	return model{
 		appState: s,
 		renderer: renderer,

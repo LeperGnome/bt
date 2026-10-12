@@ -3,9 +3,9 @@ package config
 import (
 	"log"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/go-playground/validator/v10"
 )
 
 var validate *validator.Validate
@@ -15,8 +15,8 @@ type BtConfig struct {
 	FilePreview     bool    `mapstructure:"file_preview"`
 	HighlightIndent bool    `mapstructure:"highlight_indent"`
 	InPlaceRender   bool    `mapstructure:"in_place_render"`
-	ShowHidden 		bool    `mapstructure:"show_hidden"`
-	PreviewRatio 	float64 `mapstructure:"preview_ratio" validate:"gte=0.1,lte=0.9"`
+	ShowHidden      bool    `mapstructure:"show_hidden"`
+	PreviewRatio    float64 `mapstructure:"preview_ratio" validate:"gte=0.1,lte=0.9"`
 }
 
 func GetConfig(flags *pflag.FlagSet) BtConfig {
