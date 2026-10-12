@@ -49,27 +49,29 @@ func (o Operation) IsInput() bool {
 }
 
 type State struct {
-	Tree         *t.Tree
-	OpBuf        Operation
-	PrevOpBuf    Operation
-	InputBuf     []rune
-	ErrBuf       string
-	NodeChanges  <-chan t.NodeChange
-	HelpToggle   bool
-	PreviewRatio float64
+	Tree           *t.Tree
+	OpBuf          Operation
+	PrevOpBuf      Operation
+	InputBuf       []rune
+	ErrBuf         string
+	NodeChanges    <-chan t.NodeChange
+	HelpToggle     bool
+	PreviewRatio   float64
+	PreviewEnabled bool
 }
 
-func InitState(root string, showHiddenDefault bool, previewRatio float64) (*State, error) {
+func InitState(root string, showHiddenDefault bool, previewRatio float64, previewEnabled bool) (*State, error) {
 	tree, ncc, err := t.InitTree(root, nil, showHiddenDefault)
 	if err != nil {
 		return nil, err
 	}
 	return &State{
-		Tree:         tree,
-		OpBuf:        Noop,
-		InputBuf:     []rune{},
-		NodeChanges:  ncc,
-		PreviewRatio: previewRatio,
+		Tree:           tree,
+		OpBuf:          Noop,
+		InputBuf:       []rune{},
+		NodeChanges:    ncc,
+		PreviewRatio:   previewRatio,
+		PreviewEnabled: previewEnabled,
 	}, nil
 }
 
@@ -304,7 +306,8 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		if err := s.Tree.ToggleHiddenInCurrentDirectory(); err != nil {
 			s.ErrBuf = err.Error()
 		}
-
+	case "L":
+		s.PreviewEnabled = !s.PreviewEnabled
 	case "]":
 		s.AdjustPreviewRatio(-0.05)
 	case "[":
