@@ -9,7 +9,7 @@ Manipulate file tree in terminal.
 `bt` is currently only supported on linux and macOS. Windows support is on todo list.
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@v1.2.2
+go install github.com/LeperGnome/bt/cmd/bt@v1.3.0
 ```
 
 Or from source
