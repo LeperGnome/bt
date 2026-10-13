@@ -129,7 +129,7 @@ Fixes:
 - [x] Fix size notation
 - [x] Check existing name on rename
 - [x] "gg" drops previous operation
-- [ ] File preview ignore control chars
+- [x] File preview ignore control chars
 
 Maintenance:
 - [x] Tests (at least a little bit)

@@ -148,6 +148,14 @@ func genPlainTextPreview(node *t.Node, dim Dimentions, style Stylesheet) string 
 	} else {
 		contentLines = strings.Split(string(content), "\n")
 		contentLines = contentLines[:max(min(dim.Height, len(contentLines)), 0)]
+		for i, line := range contentLines {
+			contentLines[i] = strings.Map(func(r rune) rune {
+				if r != '\t' && (r < 0x20 || r == 0x7f) {
+					return -1
+				}
+				return r
+			}, line)
+		}
 	}
 
 	return contentStyle.Render(strings.Join(contentLines, "\n"))
