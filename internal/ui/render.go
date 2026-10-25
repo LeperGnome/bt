@@ -314,27 +314,13 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 			parentIndent = append(parentIndent, indentStyle.Render(indentParent))
 		}
 
-		indentRuneCount := (len(parentIndent) - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
-
-		// Making name
-		name := node.Info.Name()
-		nameRuneCountNoStyle := utf8.RuneCountInString(name)
-
-		if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
-			name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
-		}
-
-		if node.Info.IsDir() {
-			name = r.Style.TreeDirecotryName.Render(name)
-		} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			name = r.Style.TreeLinkName.Render(name)
-		} else {
-			name = r.Style.TreeRegularFileName.Render(name)
-		}
-
-		if slices.Contains(tree.Marked, node) {
-			name = r.Style.TreeMarkedNode.Render(name)
-		}
+		name := renderNodeName(
+			node,
+			&r.Style,
+			width,
+			len(parentIndent),
+			slices.Contains(tree.Marked, node),
+		)
 
 		repr := indent + name
 
@@ -362,6 +348,49 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		}
 	}
 	return lines, currentLine
+}
+
+// Renders the node name with appropriate styles.
+func renderNodeName(
+	node *t.Node,
+	style *Stylesheet,
+	width int,
+	parentIndentCount int,
+	isMarked bool,
+) string {
+	name := node.Info.Name()
+
+	// need to resolve link before applying style, so that I can correctly trim
+	// the name if it doesn't fit the width
+	if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
+		linkRes, err := os.Readlink(node.Path)
+		if err == nil {
+			name = fmt.Sprintf("%s -> %s", name, linkRes)
+		} else {
+			name = fmt.Sprintf("%s <err: %s>", name, err.Error())
+		}
+	}
+
+	nameRuneCountNoStyle := utf8.RuneCountInString(name)
+	indentRuneCount := (parentIndentCount - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
+
+	if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
+		name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
+	}
+
+	if node.Info.IsDir() {
+		name = style.TreeDirecotryName.Render(name)
+	} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
+		name = style.TreeLinkName.Render(name)
+	} else {
+		name = style.TreeRegularFileName.Render(name)
+	}
+
+	if isMarked {
+		name = style.TreeMarkedNode.Render(name)
+	}
+
+	return name
 }
 
 var sizes = [...]string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}

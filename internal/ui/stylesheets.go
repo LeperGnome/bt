@@ -21,6 +21,7 @@ type Stylesheet struct {
 	TreeRegularFileName lipgloss.Style
 	TreeDirecotryName   lipgloss.Style
 	TreeLinkName        lipgloss.Style
+	TreeLinkTarget      lipgloss.Style
 	TreeMarkedNode      lipgloss.Style
 	TreeSelectionArrow  lipgloss.Style
 	TreeIndent          lipgloss.Style
@@ -47,6 +48,9 @@ var DefaultStylesheet = Stylesheet{
 	TreeRegularFileName: lipgloss.NewStyle().Foreground(lipgloss.Color("#E6E6E6")),
 	TreeDirecotryName:   lipgloss.NewStyle().Foreground(lipgloss.Color("#6D74AC")),
 	TreeLinkName:        lipgloss.NewStyle().Foreground(lipgloss.Color("#6DACA4")),
+	TreeLinkTarget: lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#a8a8a8")).
+		Italic(true),
 	TreeMarkedNode: lipgloss.NewStyle().
 		BorderLeft(true).
 		BorderStyle(lipgloss.InnerHalfBlockBorder()).
