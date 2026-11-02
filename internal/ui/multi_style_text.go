@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -23,6 +24,12 @@ func (m *multistyleText) Len() int {
 		acc += utf8.RuneCountInString(t.string)
 	}
 	return acc
+}
+
+func (m *multistyleText) Copy() multistyleText {
+	return multistyleText{
+		textChunks: slices.Clone(m.textChunks),
+	}
 }
 
 func (m *multistyleText) Add(text string, style lipgloss.Style) {

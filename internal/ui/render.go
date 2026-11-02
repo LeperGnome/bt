@@ -290,7 +290,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		node := el.node
 		isLast := el.isLast
 		parentIndent := el.parentIndent
-		indent := el.parentIndent
+		indent := el.parentIndent.Copy()
 
 		if node == nil {
 			continue
@@ -344,7 +344,7 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				emptyIndent := parentIndent
+				emptyIndent := parentIndent.Copy()
 				emptyIndent.Add(indentCurrentLast, r.Style.TreeIndentSelected)
 				emptyIndent.Add(emptydirContentName, lipgloss.NewStyle())
 				emptyIndent.Add(arrow, r.Style.TreeSelectionArrow)
