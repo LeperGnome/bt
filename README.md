@@ -6,10 +6,11 @@ Manipulate file tree in terminal.
 
 ## Installation
 
-`bt` is currently only supported on linux and macOS. Windows support is on todo list.
+`bt` is currently only supported on linux and macOS.
+Windows support is on todo list (but I sometimes myself run it with [coreutils](https://github.com/microsoft/coreutils) installed, so you can experiment also).
 
 ```bash
-go install github.com/LeperGnome/bt/cmd/bt@v1.3.0
+go install github.com/LeperGnome/bt/cmd/bt@v1.3.1
 ```
 
 Or from source
@@ -116,14 +117,15 @@ Functional:
 - [x] Async preview
 - [x] Mark multiple files
 - [x] Config for showing hidden files by default
-- [ ] Image preview TGP
-- [ ] Custom delete cmd
-- [ ] Search
-- [ ] Marked to stdout on exit
+- [ ] Scroll preview
 - [ ] Jump to current directory
 - [ ] Go higher then local root
-- [ ] Make current directory a local root
 - [ ] Windows support
+- [ ] Search
+- [ ] Custom delete cmd
+- [ ] Marked to stdout on exit
+- [ ] Make current directory a local root
+- [ ] Image preview TGP
 
 Fixes:
 - [x] Fix size notation
