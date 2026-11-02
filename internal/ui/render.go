@@ -275,11 +275,11 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 
 	type stackEl struct {
 		node         *t.Node
-		parentIndent []string
+		parentIndent multistyleText
 		isLast       bool
 	}
 	lines := []string{}
-	s := stack.NewStack(stackEl{tree.Root, []string{""}, false})
+	s := stack.NewStack(stackEl{tree.Root, multistyleText{}, false})
 
 	selected := tree.GetSelectedChild()
 
@@ -290,59 +290,68 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 		node := el.node
 		isLast := el.isLast
 		parentIndent := el.parentIndent
+		indent := el.parentIndent
 
 		if node == nil {
 			continue
 		}
 
-		// Making indent
 		indentStyle := r.Style.TreeIndent
-
 		if r.highlightCurrentIndent && selected != nil && selected.Parent == node.Parent {
 			indentStyle = r.Style.TreeIndentSelected
 		}
 
-		var indent string
-
 		if node == tree.Root {
-			indent = ""
+			// No indent.
 		} else if isLast {
-			indent = strings.Join(append(parentIndent, indentStyle.Render(indentCurrentLast)), "")
-			parentIndent = append(parentIndent, indentEmpty)
+			indent.Add(indentCurrentLast, indentStyle)
+			parentIndent.Add(indentEmpty, indentStyle)
 		} else {
-			indent = strings.Join(append(parentIndent, indentStyle.Render(indentCurrent)), "")
-			parentIndent = append(parentIndent, indentStyle.Render(indentParent))
+			indent.Add(indentCurrent, indentStyle)
+			parentIndent.Add(indentParent, indentStyle)
 		}
 
 		name := renderNodeName(
 			node,
 			&r.Style,
-			width,
-			len(parentIndent),
 			slices.Contains(tree.Marked, node),
 		)
 
-		repr := indent + name
+		lineMT := indent
+
+		lineMT.Append(name)
 
 		if node.ShowsHiddenNonDefault() && node.Info.IsDir() {
-			repr += hiddenToggle
+			lineMT.Add(hiddenToggle, lipgloss.NewStyle())
 		}
 
 		if tree.GetSelectedChild() == node {
-			repr += r.Style.TreeSelectionArrow.Render(arrow)
+			if lineMT.Len() > width-3 {
+				lineMT.TrimTo(width - 6)
+				lineMT.Add("...", lipgloss.NewStyle())
+			}
+			lineMT.Add(arrow, r.Style.TreeSelectionArrow)
 			currentLine = linen
+		} else {
+			if lineMT.Len() > width {
+				lineMT.TrimTo(width - 3)
+				lineMT.Add("...", lipgloss.NewStyle())
+			}
 		}
-		lines = append(lines, repr)
+
+		lines = append(lines, lineMT.Render())
 
 		if node.Children != nil {
 			// current directory is empty
 			if len(node.Children) == 0 && tree.CurrentDir == node {
-				emptyIndent := strings.Join(append(parentIndent, r.Style.TreeIndentSelected.Render(indentCurrentLast)), "")
-				lines = append(lines, emptyIndent+emptydirContentName+r.Style.TreeSelectionArrow.Render(arrow))
+				emptyIndent := parentIndent
+				emptyIndent.Add(indentCurrentLast, r.Style.TreeIndentSelected)
+				emptyIndent.Add(emptydirContentName, lipgloss.NewStyle())
+				emptyIndent.Add(arrow, r.Style.TreeSelectionArrow)
+				lines = append(lines, emptyIndent.Render())
 				currentLine = linen + 1
 			}
-			for i := len(node.Children) - 1; i >= 0; i-- {
-				ch := node.Children[i]
+			for i, ch := range slices.Backward(node.Children) {
 				s.Push(stackEl{ch, parentIndent, i == len(node.Children)-1})
 			}
 		}
@@ -354,43 +363,31 @@ func (r *Renderer) renderTreeFull(tree *t.Tree, width int) ([]string, int) {
 func renderNodeName(
 	node *t.Node,
 	style *Stylesheet,
-	width int,
-	parentIndentCount int,
 	isMarked bool,
-) string {
+) multistyleText {
 	name := node.Info.Name()
-
-	// need to resolve link before applying style, so that I can correctly trim
-	// the name if it doesn't fit the width
-	if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
-		linkRes, err := os.Readlink(node.Path)
-		if err == nil {
-			name = fmt.Sprintf("%s -> %s", name, linkRes)
-		} else {
-			name = fmt.Sprintf("%s <err: %s>", name, err.Error())
-		}
-	}
-
-	nameRuneCountNoStyle := utf8.RuneCountInString(name)
-	indentRuneCount := (parentIndentCount - 1) * utf8.RuneCountInString(indentCurrent) // Hacky
-
-	if nameRuneCountNoStyle+indentRuneCount > width-6 { // 6 = len([]rune{"... <-"})
-		name = string([]rune(name)[:max(0, width-indentRuneCount-6)]) + "..."
+	nameOut := multistyleText{}
+	baseStyle := lipgloss.NewStyle()
+	if isMarked {
+		baseStyle = style.TreeMarkedNode
 	}
 
 	if node.Info.IsDir() {
-		name = style.TreeDirecotryName.Render(name)
+		nameOut.Add(name, style.TreeDirecotryName.Inherit(baseStyle))
 	} else if node.Info.Mode()&os.ModeSymlink == os.ModeSymlink {
-		name = style.TreeLinkName.Render(name)
+		nameOut.Add(name, style.TreeLinkName.Inherit(baseStyle))
+
+		linkRes, err := os.Readlink(node.Path)
+		if err != nil {
+			linkRes = fmt.Sprintf("<err: %s>", err.Error())
+		}
+
+		nameOut.Add(" -> ", lipgloss.NewStyle())
+		nameOut.Add(linkRes, style.TreeLinkTarget)
 	} else {
-		name = style.TreeRegularFileName.Render(name)
+		nameOut.Add(name, style.TreeRegularFileName.Inherit(baseStyle))
 	}
-
-	if isMarked {
-		name = style.TreeMarkedNode.Render(name)
-	}
-
-	return name
+	return nameOut
 }
 
 var sizes = [...]string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
