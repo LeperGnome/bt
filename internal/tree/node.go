@@ -21,6 +21,8 @@ type Node struct {
 	selectedChildIdx  int
 	showHidden        bool
 	showHiddenDefault bool
+
+	ReadOffset int64
 }
 
 func (n *Node) SelectLast() {
@@ -94,9 +96,9 @@ func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
 		return 0, err
 	}
 	defer f.Close()
-	limitedReader := io.LimitReader(f, limit)
-	k, err := limitedReader.Read(buf)
-	if err != nil {
+	reader := io.NewSectionReader(f, n.ReadOffset, limit)
+	k, err := reader.Read(buf)
+	if err != nil && err != io.EOF {
 		return 0, err
 	}
 	return k, nil
@@ -108,6 +110,7 @@ func NewNode(path string, info fs.FileInfo, parent *Node, showHidden bool) *Node
 		Info:              info,
 		Children:          nil,
 		Parent:            parent,
+		ReadOffset:        0,
 		showHidden:        showHidden,
 		showHiddenDefault: showHidden,
 	}
