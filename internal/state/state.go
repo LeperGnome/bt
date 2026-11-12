@@ -267,12 +267,12 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 	case "ctrl+u":
 		child := s.Tree.GetSelectedChild()
 		if child != nil {
-			child.ReadOffset = max(0, child.ReadOffset-100)
+			child.ReadOffsetLines = max(0, child.ReadOffsetLines-10)
 		}
 	case "ctrl+d":
 		child := s.Tree.GetSelectedChild()
 		if child != nil {
-			child.ReadOffset += 100
+			child.ReadOffsetLines += 10
 		}
 	case "y":
 		if len(s.Tree.Marked) != 0 {

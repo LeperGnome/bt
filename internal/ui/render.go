@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	previewTextBytesLimit int64 = 10_000
-	previewChangBuffer    int   = 20
+	previewChangBuffer int = 20
 
 	minHeight = 10
 	minWidth  = 10
@@ -46,7 +45,7 @@ type Dimentions struct {
 type PreviweCacheKey struct {
 	Path   string
 	Dim    Dimentions
-	Offset int64
+	Offset int
 }
 
 type Preview struct {
@@ -60,7 +59,7 @@ type Renderer struct {
 
 	PreviewDoneChan        <-chan Preview
 	previewGenChan         chan<- Preview
-	previewCache           map[PreviweCacheKey]Preview // TODO: limit cache size somehow? Queue~ map?
+	previewCache           map[PreviweCacheKey]Preview
 	highlightCurrentIndent bool
 	offsetMem              int
 }
@@ -113,7 +112,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	var preview string
 
 	if s.PreviewEnabled {
-		treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
+		treeWidth := int(math.Ceil((1.0 - s.PreviewRatio) * float64(window.Width)))
 		previewWidth := window.Width - treeWidth
 		treeDimentions = Dimentions{Height: bodyLen, Width: treeWidth}
 		preview = r.renderSelectedFileContent(s.Tree, Dimentions{Height: bodyLen, Width: previewWidth})
@@ -243,7 +242,7 @@ func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) strin
 	if ch == nil {
 		return ""
 	}
-	key := PreviweCacheKey{ch.Path, dim, ch.ReadOffset}
+	key := PreviweCacheKey{ch.Path, dim, ch.ReadOffsetLines}
 	preview, ok := r.previewCache[key]
 	if !ok || preview.Key.Dim != dim {
 		// Async preview generation. Main thread will read from preview channel and call Update,

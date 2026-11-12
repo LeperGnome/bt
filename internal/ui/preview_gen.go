@@ -133,24 +133,52 @@ func imageHalfBlockRepr(r io.Reader, heightSymbols, widthSymbols int) string {
 }
 
 func genPlainTextPreview(node *t.Node, dim Dimentions, style Stylesheet) string {
-	buf := make([]byte, previewTextBytesLimit)
-	n, err := node.ReadContent(buf, previewTextBytesLimit)
+
+	// Estimaing the maximum data that fits preview dimensions.
+	wrappedLineMaxSize := dim.Width * 4 // utf8 char max size
+	previewMaxSize := wrappedLineMaxSize * dim.Height
+	previewAreasToRead := 2 + (node.ReadOffsetLines / dim.Height)
+	bytesToRead := previewAreasToRead * previewMaxSize
+
+	buf := make([]byte, bytesToRead)
+
+	n, err := node.ReadContent(buf, int64(bytesToRead))
 	if err != nil {
 		return ""
 	}
 	content := buf[:n]
 
-	contentStyle := style.PlainTextPreview.MaxWidth(dim.Width - 1) // -1 for border...
-
 	var contentLines []string
 	if !utf8.Valid(content) {
 		contentLines = []string{binaryContentPlaceholder}
 	} else {
-		contentLines = strings.Split(string(content), "\n")
-		contentLines = contentLines[:max(min(dim.Height, len(contentLines)), 0)]
+		contentLines = toWrappedLines(string(content), dim.Width)
+		linesFrom := max(min(node.ReadOffsetLines, len(contentLines)-1), 0)
+		linesTo := max(min(dim.Height+node.ReadOffsetLines, len(contentLines)), linesFrom)
+		contentLines = contentLines[linesFrom:linesTo]
 	}
 
-	return contentStyle.Render(strings.Join(contentLines, "\n"))
+	return style.PlainTextPreview.Render(strings.Join(contentLines, "\n"))
+}
+
+func toWrappedLines(content string, width int) []string {
+	res := []string{}
+	content = strings.ReplaceAll(content, "\t", "    ")
+	currentSubStart := 0
+	for i, b := range content {
+		if b == '\n' {
+			res = append(res, string(content[currentSubStart:i])) // not including the newline itself
+			currentSubStart = i + 1
+		} else if i+1-currentSubStart >= width {
+			// those cases could be rendered differently - e.g. not showing real line number
+			res = append(res, string(content[currentSubStart:i+1]))
+			currentSubStart = i + 1
+		}
+	}
+	if currentSubStart != len(content) {
+		res = append(res, string(content[currentSubStart:]))
+	}
+	return res
 }
 
 // TODO: TGP support
