@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	previewTextBytesLimit int64 = 10_000
-	previewChangBuffer    int   = 20
+	previewChangBuffer int = 20
 
 	minHeight = 10
 	minWidth  = 10
@@ -43,9 +42,14 @@ type Dimentions struct {
 	Height int
 }
 
+type PreviweCacheKey struct {
+	Path   string
+	Dim    Dimentions
+	Offset int
+}
+
 type Preview struct {
-	Path    string
-	Dim     Dimentions
+	Key     PreviweCacheKey
 	Content string
 }
 
@@ -54,8 +58,8 @@ type Renderer struct {
 	EdgePadding int
 
 	PreviewDoneChan        <-chan Preview
-	previewCache           map[string]Preview // TODO: limit cache size somehow? Queue~ map?
 	previewGenChan         chan<- Preview
+	previewCache           map[PreviweCacheKey]Preview
 	highlightCurrentIndent bool
 	offsetMem              int
 }
@@ -70,18 +74,26 @@ func NewRenderer(
 		Style:                  style,
 		EdgePadding:            edgePadding,
 		PreviewDoneChan:        previewChan,
-		previewCache:           map[string]Preview{},
+		previewCache:           map[PreviweCacheKey]Preview{},
 		previewGenChan:         previewChan,
 		highlightCurrentIndent: highlightCurrentIndent,
 	}
 }
 
 func (r *Renderer) SetPreviewCache(preivew Preview) {
-	r.previewCache[preivew.Path] = preivew
+	r.previewCache[preivew.Key] = preivew
 }
 
 func (r *Renderer) RemovePreviewCache(path string) {
-	delete(r.previewCache, path)
+	toDelete := []PreviweCacheKey{}
+	for k, _ := range r.previewCache {
+		if k.Path == path {
+			toDelete = append(toDelete, k)
+		}
+	}
+	for _, del := range toDelete {
+		delete(r.previewCache, del)
+	}
 }
 
 func (r *Renderer) Render(s *state.State, window Dimentions) string {
@@ -100,7 +112,7 @@ func (r *Renderer) Render(s *state.State, window Dimentions) string {
 	var preview string
 
 	if s.PreviewEnabled {
-		treeWidth := int(math.Floor((1.0 - s.PreviewRatio) * float64(window.Width)))
+		treeWidth := int(math.Ceil((1.0 - s.PreviewRatio) * float64(window.Width)))
 		previewWidth := window.Width - treeWidth
 		treeDimentions = Dimentions{Height: bodyLen, Width: treeWidth}
 		preview = r.renderSelectedFileContent(s.Tree, Dimentions{Height: bodyLen, Width: previewWidth})
@@ -230,8 +242,9 @@ func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) strin
 	if ch == nil {
 		return ""
 	}
-	preview, ok := r.previewCache[ch.Path]
-	if !ok || preview.Dim != dim {
+	key := PreviweCacheKey{ch.Path, dim, ch.ReadOffsetLines}
+	preview, ok := r.previewCache[key]
+	if !ok || preview.Key.Dim != dim {
 		// Async preview generation. Main thread will read from preview channel and call Update,
 		// which will then set the cache and call Render.
 
@@ -240,7 +253,7 @@ func (r *Renderer) renderSelectedFileContent(tree *t.Tree, dim Dimentions) strin
 		// I can solve it by using some locking mechanism.
 		go func() {
 			preview := GeneratePreview(ch, dim, r.Style)
-			r.previewGenChan <- Preview{Content: preview, Dim: dim, Path: ch.Path}
+			r.previewGenChan <- Preview{Key: key, Content: preview}
 		}()
 		return loadingPlaceholder
 	}

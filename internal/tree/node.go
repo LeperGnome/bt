@@ -21,10 +21,11 @@ type Node struct {
 	selectedChildIdx  int
 	showHidden        bool
 	showHiddenDefault bool
+
+	ReadOffsetLines int
 }
 
 func (n *Node) SelectLast() {
-	// can I just check for len here?
 	if len(n.Children) > 0 {
 		n.selectedChildIdx = len(n.Children) - 1
 	}
@@ -94,9 +95,9 @@ func (n *Node) ReadContent(buf []byte, limit int64) (int, error) {
 		return 0, err
 	}
 	defer f.Close()
-	limitedReader := io.LimitReader(f, limit)
-	k, err := limitedReader.Read(buf)
-	if err != nil {
+	reader := io.LimitReader(f, limit)
+	k, err := reader.Read(buf)
+	if err != nil && err != io.EOF {
 		return 0, err
 	}
 	return k, nil
@@ -108,6 +109,7 @@ func NewNode(path string, info fs.FileInfo, parent *Node, showHidden bool) *Node
 		Info:              info,
 		Children:          nil,
 		Parent:            parent,
+		ReadOffsetLines:   0,
 		showHidden:        showHidden,
 		showHiddenDefault: showHidden,
 	}

@@ -264,6 +264,16 @@ func (s *State) processKeyDefault(msg tea.KeyMsg) tea.Cmd {
 		}
 	case "h", "left":
 		s.Tree.SetParentAsCurrent()
+	case "ctrl+u":
+		child := s.Tree.GetSelectedChild()
+		if child != nil {
+			child.ReadOffsetLines = max(0, child.ReadOffsetLines-10)
+		}
+	case "ctrl+d":
+		child := s.Tree.GetSelectedChild()
+		if child != nil {
+			child.ReadOffsetLines += 10
+		}
 	case "y":
 		if len(s.Tree.Marked) != 0 {
 			s.OpBuf = Copy

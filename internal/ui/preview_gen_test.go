@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -40,5 +42,68 @@ func TestHalfBlockRepr(t *testing.T) {
 			fmt.Printf("got:\n%s\nwant:\n%s\n", string(o), repr)
 			t.Fatalf("Repr does not match for %s", tc.imgPath)
 		}
+	}
+}
+
+type lwTest struct {
+	content       string
+	width         int
+	expectedSplit []string
+}
+
+var lwTests = []lwTest{
+	{
+		"0123456789",
+		5,
+		[]string{
+			"01234",
+			"56789",
+		},
+	},
+	{
+		"0123456789",
+		3,
+		[]string{
+			"012",
+			"345",
+			"678",
+			"9",
+		},
+	},
+	{
+		"0123456789",
+		100,
+		[]string{
+			"0123456789",
+		},
+	},
+	{
+		"01234\n56789\n",
+		3,
+		[]string{
+			"012",
+			"34",
+			"567",
+			"89",
+		},
+	},
+	{
+		"	g", // it's \tg
+		2,
+		[]string{
+			"  ",
+			"  ",
+			"g",
+		},
+	},
+}
+
+func TestLineWrap(t *testing.T) {
+	for _, tc := range lwTests {
+		require.Equal(
+			t,
+			tc.expectedSplit,
+			toWrappedLines(tc.content, tc.width),
+		)
 	}
 }

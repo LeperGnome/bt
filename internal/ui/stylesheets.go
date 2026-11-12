@@ -61,8 +61,5 @@ var DefaultStylesheet = Stylesheet{
 
 	PlainTextPreview: lipgloss.NewStyle().
 		Italic(true).
-		Foreground(lipgloss.Color("#a8a8a8")).
-		BorderForeground(lipgloss.Color("#363636")).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderLeft(true),
+		Foreground(lipgloss.Color("#a8a8a8")),
 }
